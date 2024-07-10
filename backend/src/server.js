@@ -1,21 +1,18 @@
 const express = require('express');
+const bodyParser = require('body-parser');
 const app = express();
 var cors = require('cors')
 const port = process.env.PORT || 5000;
-const db = require('./db');
+
+const authRoutes = require('./routes/authRoutes')
+const userRoutes = require('./routes/userRoutes')
+const authMiddleware = require('./middleware/AuthMiddleware')
 
 app.use(cors());
+app.use(bodyParser.json());
 
-app.get('/api/message', (req, res) => {
-    console.log("entered")
-  db.query('SELECT message FROM messages LIMIT 1', (err, results) => {
-    if (err) {
-        console.log(err)
-      return res.status(500).json({ error: err.message });
-    }
-    res.json({ message: results[0].message });
-  });
-});
+app.use('/auth', authRoutes)
+app.use('/users', authMiddleware, userRoutes);
 
 app.get('/test', (req,res) => {
     console.log("in test api")

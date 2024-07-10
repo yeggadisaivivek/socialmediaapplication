@@ -1,23 +1,15 @@
 import React, { useState, useEffect } from 'react';
+import './index.css';
+import { Outlet } from 'react-router-dom';
 
-
-function App() {
-  const [message, setMessage] = useState('');
-
-  useEffect(() => {
-    fetch('http://localhost:5001/test')
-      .then(response => response.json())
-      .then(data => setMessage(data.message));
-  }, []);
-
+export default function App() {
   return (
-    <div className="App">
-      <header className="App-header">
-      <h1>Hello boys</h1>
-        <p>{message}</p>
-      </header>
-    </div>
-  );
+    <>
+      <div>
+        <main>
+          <Outlet />
+        </main>
+      </div>
+    </>
+  )
 }
-
-export default App;
