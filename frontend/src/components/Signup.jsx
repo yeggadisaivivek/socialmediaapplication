@@ -7,6 +7,7 @@ import authService from "../appwrite/auth"
 import Button from "./Button"
 import Input from "./Input"
 import { login } from "../redux/authSlice"
+import { registerUser } from "../apiCalls/apiCalls"
 
 function Signup() {
     const navigate = useNavigate()
@@ -16,14 +17,13 @@ function Signup() {
 
     const create = async (data) => {
         setError("")
+        console.log("called.....")
         try {
+            console.log("called.....12333")
             console.log(data);
-            const userData = await authService.createAccount(data)
-            if (userData) {
-                const userData = await authService.getCurrentUser()
-                if (userData) dispatch(login({userData}))
-                navigate("/")
-            }
+            const userData = await registerUser(data);
+            navigate('/login')
+            console.log(userData)
         } catch (error) {
             setError(error.message)
         }
@@ -51,18 +51,13 @@ function Signup() {
                 <form onSubmit={handleSubmit(create)} className="mt-8">
                     <div className="space-y-5">
                         <Input
-                            {...register("name", { required: true })}
-                            label="Full Name : "
-                            placeholder="Full Name"
-                        />
-                        <Input
-                            {...register("email", {
+                            {...register("username", {
                                 required: true,
                                 
                             })}
-                            label="Email : "
-                            placeholder="Email Address"
-                            type="email"
+                            label="Username : "
+                            placeholder="Unique Username"
+                            type="text"
                         />
                         <Input
                             {...register("password", { required: true })}

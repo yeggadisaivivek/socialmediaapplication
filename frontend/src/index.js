@@ -7,10 +7,12 @@ import store from './redux/store';
 import Home from './pages/Home';
 import Protected from './components/Protected';
 import Login from './pages/Login';
-import AllPosts from './pages/AllPosts';
-import AddPost from './pages/AddPost';
+import AllPosts from './pages/PostsFeed';
 import EditPost from './pages/EditPost';
 import SignupPage from './pages/Signup';
+import Profile from './pages/Profile';
+import CreatePost from './pages/CreatePost';
+import Search from './pages/Search';
 
 const router  = createBrowserRouter([
   {
@@ -19,7 +21,35 @@ const router  = createBrowserRouter([
     children: [
       {
         path: '/',
-        element: <Home />
+        element: (
+          <Protected authentication={false}>
+            <Home />
+          </Protected>
+        )
+      },
+      {
+        path: '/profile',
+        element: (
+          <Protected authentication={false}>
+            <Profile />
+          </Protected>
+        )
+      },
+      {
+        path: '/profile/:userId',
+        element: (
+          <Protected authentication={false}>
+            <Profile />
+          </Protected>
+        )
+      },
+      {
+        path: '/search',
+        element: (
+          <Protected authentication={false}>
+            <Search />
+          </Protected>
+        )
       },
       {
         path: '/login',
@@ -48,8 +78,8 @@ const router  = createBrowserRouter([
       {
         path: '/addpost',
         element: (
-          <Protected authentication>
-            <AddPost />
+          <Protected authentication={false}>
+            <CreatePost />
           </Protected>
         )
       },

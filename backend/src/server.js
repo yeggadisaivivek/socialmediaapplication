@@ -13,7 +13,7 @@ app.use(bodyParser.json());
 
 app.use('/auth', authRoutes)
 app.use('/users', authMiddleware, userRoutes);
-
+console.log("hello")
 app.get('/test', (req,res) => {
     console.log("in test api")
     res.json({ message: "hello it is working fine"})
