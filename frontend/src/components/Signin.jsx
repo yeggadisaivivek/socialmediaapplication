@@ -8,6 +8,7 @@ import {useForm} from "react-hook-form"
 import {useDispatch} from "react-redux"
 import {login as authLogin} from "../redux/authSlice"
 import authService from "../appwrite/auth"
+import { loginUser } from "../apiCalls/apiCalls"
 
 function Signin() {
     const navigate = useNavigate()
@@ -18,12 +19,9 @@ function Signin() {
     const login = async (data) => {
         setError("")
         try {
-            const session = await authService.login(data)
-            if (session) {
-                const userData = await authService.getCurrentUser()
-                if (userData) dispatch(authLogin({userData}))
-                navigate("/")
-            }
+            const session = await loginUser(data)
+            dispatch(authLogin());
+            navigate('/');
         } catch (error) {
             setError(error.message)
         }
@@ -51,10 +49,10 @@ function Signin() {
                 <form onSubmit={handleSubmit(login)} className="mt-8">
                     <div className="space-y-5">
                         <Input
-                            label="Email : "
-                            placeholder="Email Address"
-                            type="email"
-                            {...register("email", {
+                            label="Username : "
+                            placeholder="username"
+                            type="text"
+                            {...register("username", {
                                 required: true,
                                 
                             })}
