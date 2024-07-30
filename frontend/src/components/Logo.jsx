@@ -1,8 +1,9 @@
 import React from 'react'
+import logo from '../metadata/pictures/logo.webp'
 
 function Logo({width}) {
   return (
-    <img src='' alt='logo' style={{width}}/>
+    <img src={logo} alt='logo' style={{width}}/>
   )
 }
 

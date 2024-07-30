@@ -22,7 +22,7 @@ const updateFollowers = (userID, followerID) => {
                 });
             } else {
                 // Followers record exists, update it
-                let followers = JSON.parse(results[0].list_of_followers || '[]');
+                let followers = results[0].list_of_followers || [];
                 if (!followers.includes(followerID)) {
                     followers.push(followerID);
                     const updatedFollowers = JSON.stringify(followers);
@@ -51,7 +51,7 @@ const unfollowFollower = (userID, followerID) => {
             }
 
             // Followers record exists, update it
-            let followers = JSON.parse(results[0].list_of_followers || '[]');
+            let followers = JSON.parse(JSON.stringify(results[0].list_of_followers) || '[]');
             if (followers.includes(followerID)) {
                 followers = followers.filter(id => id !== followerID);
                 const updatedFollowers = JSON.stringify(followers);

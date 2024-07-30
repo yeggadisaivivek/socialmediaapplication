@@ -3,10 +3,10 @@ const { getUserDataByUserID, createUserDataByUserID, updateUserDataByUserID } = 
 const router = express.Router();
 
 router.get('/',async (req, res) => {
-    const userID = req.params.userId;
-    
+    const userID = res.locals.userId;
+    const { followerId } = req.query;
     try {
-        const response = await getUserDataByUserID(userID);
+        const response = await getUserDataByUserID(userID, followerId);
         if (response.error) {
             res.status(500).json({ message: 'Server error', error: response.error });
         } else {
@@ -35,15 +35,15 @@ router.post('/', async (req, res) => {
 })
 
 router.put('/', async (req, res) => {
-    const userID = req.params.userId;
-    const { name, bio, profilePicBase64Encoded } = req.body;
+    const userID = res.locals.userId;
+    const { name, bio, profilePicKey } = req.body;
 
     try {
-        const response = await updateUserDataByUserID(userID, name, bio, profilePicBase64Encoded);
+        const response = await updateUserDataByUserID(userID, name, bio, profilePicKey);
         if (response.error) {
             res.status(500).json({ message: 'Server error', error: response.error });
         } else {
-            res.status(201).json({ message: 'User created Successfully' });
+            res.status(201).json({ message: response.message, response });
         }
     } catch (error) {
         res.status(500).json({ message: 'Server error' });

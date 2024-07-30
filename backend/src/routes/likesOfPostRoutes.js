@@ -5,9 +5,9 @@ const router = express.Router();
 // Lists all the users who liked the post. 
 // Returns name and user_id
 router.get('/', async (req,res) => {
-    const postID = req.params.postId;
+    const { userId, postId } = res.locals.params;;
     try {
-        const response = await getUsersWhoLikedPost(postID);
+        const response = await getUsersWhoLikedPost(postId);
         if (response.error) {
             res.status(500).json({ message: 'Server error', error: response?.error });
         } else {
@@ -20,7 +20,7 @@ router.get('/', async (req,res) => {
 
 // Like or Unlike the post
 router.post('/', async (req, res) => {
-    const { userId, postId } = req.params;
+    const { userId, postId } = res.locals.params;
     const { action } = req.body; // 'like' or 'unlike'
 
     try {

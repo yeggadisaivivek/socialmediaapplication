@@ -2,7 +2,7 @@ const AWS = require('aws-sdk')
 
 // Configure AWS SDK with your credentials and region
 AWS.config.update({
-    accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+    accessKeyId: process.env.AWS_ACCESS_KEY,
     secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
     region: process.env.AWS_REGION
 });
@@ -15,7 +15,7 @@ const uploadImageToS3Bucket = (base64Image, folder = 'uploads', fileName = `${Da
         const buffer = Buffer.from(base64Image, 'base64');
 
         const params = {
-            Bucket: process.env.AWS_BUCKET_NAME,
+            Bucket: process.env.AWS_S3_BUCKET,
             Key: `${folder}/${fileName}`,
             Body: buffer,
             ContentEncoding: 'base64',
@@ -36,7 +36,7 @@ const uploadImageToS3Bucket = (base64Image, folder = 'uploads', fileName = `${Da
 const getImageFromS3Bucket = (key) => {
     return new Promise((resolve, reject) => {
         const params = {
-            Bucket: process.env.AWS_BUCKET_NAME,
+            Bucket: process.env.AWS_S3_BUCKET,
             Key: key,
         };
 
@@ -52,7 +52,7 @@ const getImageFromS3Bucket = (key) => {
 const deleteImageFromS3Bucket = (key) => {
     return new Promise((resolve, reject) => {
         const params = {
-            Bucket: process.env.AWS_BUCKET_NAME,
+            Bucket: process.env.AWS_S3_BUCKET,
             Key: key
         };
 
@@ -65,5 +65,15 @@ const deleteImageFromS3Bucket = (key) => {
     });
 };
 
+const getSignedURLFromS3Bucket = (key) => {
+    const params = {
+      Bucket: process.env.AWS_S3_BUCKET, 
+      Key: key,
+      Expires: 60 * 5,
+    };
+  
+    // Generate the signed URL
+    return s3.getSignedUrl('getObject', params);
+  };
 
-module.exports = { uploadImageToS3Bucket, getImageFromS3Bucket, deleteImageFromS3Bucket }
+module.exports = { uploadImageToS3Bucket, getImageFromS3Bucket, deleteImageFromS3Bucket, getSignedURLFromS3Bucket }

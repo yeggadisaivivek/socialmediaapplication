@@ -1,63 +1,125 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { updateProfile } from '../redux/profileSlice';
-
-//import axios from 'axios';
+import { fetchUserDetails, getPreSignedURL, updateUserDetails } from '../apiCalls/apiCalls';
+import axios from 'axios';
+import { setUsername } from '../redux/authSlice';
+import defaultProfilePic from '../metadata/pictures/default_profile_pic.jpg'
 
 const Bio = () => {
   const dispatch = useDispatch();
-  const user = useSelector((state) => state.profile.user);
+  const isMounted = useRef(false);
+  const userId = useSelector((state) => state.auth.userId);
+
   const [stats, setStats] = useState({
     followersCount: 0,
     postsCount: 0,
-    followingCount: 0,
   });
-
+  const [saveButtonDisabled,setSaveButtonDisabled] = useState(true)
   const [editMode, setEditMode] = useState(false);
   const [formData, setFormData] = useState({
-    bio: user.bio || '',
-    profilePicture: user.profilePicture || '',
+    bio: '',
+    profilePicture: '',
+    profilePictureFile: null, // to store the file object
+    profilePictureKey: '', // key to store the S3 key
   });
 
-//   useEffect(() => {
-//     const fetchStats = async () => {
-//       try {
-//         const response = await axios.get(`/api/user-stats/${user.id}`);
-//         setStats(response.data);
-//       } catch (error) {
-//         console.error('Error fetching user stats:', error);
-//       }
-//     };
+  useEffect(() => {
+    if (isMounted.current) {
+      return;
+    }
 
-//     fetchStats();
-//   }, [user.id]);
+    const getUserDetails = async () => {
+      try {
+        const userDetails = await fetchUserDetails(userId);
+        // Update state with fetched details
+        if (userDetails) {
+          setFormData({
+            name: userDetails.name || 'No name',
+            bio: userDetails.bio || '',
+            profilePicture: userDetails.profile_pic_url || defaultProfilePic,
+            profilePictureKey: userDetails.profilePictureKey || '',
+          });
+          setStats({
+            followersCount: userDetails.number_of_followers || 0,
+            postsCount: userDetails.number_of_posts || 0,
+          });
+
+          dispatch(setUsername({username : userDetails.name}))
+        }
+      } catch (error) {
+        console.error('Error fetching user details:', error);
+      }
+    }
+
+    getUserDetails();
+    isMounted.current = true;
+  }, [userId]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData({
-      ...formData,
+    setSaveButtonDisabled(false);
+    setFormData((prevData) => ({
+      ...prevData,
       [name]: value,
-    });
+    }));
   };
 
   const handleFileChange = (e) => {
     const file = e.target.files[0];
-    console.log("file:::"+file)
-    setFormData({
-      ...formData,
-      profilePicture: URL.createObjectURL(file),
-    });
-    console.log("formdata::::"+formData)
+    saveButtonDisabled(false)
+    if (file) {
+      setFormData((prevData) => ({
+        ...prevData,
+        profilePicture: URL.createObjectURL(file),
+        profilePictureFile: file, // store the file object
+      }));
+    }
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    dispatch(updateProfile(formData));
-    setEditMode(false);
+
+    let profilePicKey = formData.profilePictureKey;
+
+    if (formData.profilePictureFile) {
+      try {
+        const response = await getPreSignedURL(formData.profilePictureFile.name, formData.profilePictureFile.type)
+        const { url, key } = response;
+        await axios.put(url, formData.profilePictureFile, {
+          headers: {
+            'Content-Type': formData.profilePictureFile.type,
+          },
+        });
+        profilePicKey = key;
+      } catch (error) {
+        console.error('Error uploading file:', error);
+        return; // Exit if file upload fails
+      }
+    }
+
+    try {
+      await updateUserDetails(userId, formData.bio, profilePicKey);
+      const updatedUserDetails = await fetchUserDetails(userId);
+      if (updatedUserDetails) {
+        setFormData({
+          name: updatedUserDetails.name || 'No name',
+          bio: updatedUserDetails.bio || '',
+          profilePicture: updatedUserDetails.profilePicture || '',
+          profilePictureKey: updatedUserDetails.profilePictureKey || '',
+        });
+        setStats({
+          followersCount: updatedUserDetails.number_of_followers || 0,
+          postsCount: updatedUserDetails.number_of_posts || 0,
+        });
+      }
+      setEditMode(false);
+    } catch (error) {
+      console.error('Error updating profile:', error);
+    }
   };
 
   return (
-    <div className="p-4 text-white">
+    <div className="p-4 ">
       {editMode ? (
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
@@ -66,14 +128,13 @@ const Bio = () => {
               name="bio"
               value={formData.bio}
               onChange={handleChange}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+              className="mt-1 block w-full rounded-md border-black shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
             />
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700">Profile Picture</label>
             <input
               type="file"
-              accept="image/*"
               onChange={handleFileChange}
               className="mt-1 block w-full text-sm text-gray-500"
             />
@@ -81,7 +142,7 @@ const Bio = () => {
           {formData.profilePicture && (
             <img src={formData.profilePicture} alt="Profile Preview" className="w-24 h-24 rounded-full mt-2" />
           )}
-          <div className="flex justify-end space-x-2">
+          <div className="flex justify-start space-x-2">
             <button
               type="button"
               onClick={() => setEditMode(false)}
@@ -92,6 +153,7 @@ const Bio = () => {
             <button
               type="submit"
               className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700"
+              disabled={saveButtonDisabled}
             >
               Save
             </button>
@@ -100,11 +162,11 @@ const Bio = () => {
       ) : (
         <div>
           <div className="flex items-center space-x-4">
-            <img src={user.profilePicture} alt="Profile" className="w-24 h-24 rounded-full" />
+            <img src={formData.profilePicture} alt="Profile" className="w-24 h-24 rounded-full" />
           </div>
           <div>
-            <h2 className="text-xl font-bold">{user.name}</h2>
-            <p>{user.bio}</p>
+            <h2 className="text-xl font-bold">{formData.name}</h2>
+            <p>{formData.bio}</p>
           </div>
           <div className="mt-4 flex space-x-8">
             <div className="text-center">
@@ -114,10 +176,6 @@ const Bio = () => {
             <div className="text-center">
               <span className="block text-xl font-bold">{stats.followersCount}</span>
               <span className="text-sm text-gray-500">Followers</span>
-            </div>
-            <div className="text-center">
-              <span className="block text-xl font-bold">{stats.followingCount}</span>
-              <span className="text-sm text-gray-500">Following</span>
             </div>
           </div>
           <button

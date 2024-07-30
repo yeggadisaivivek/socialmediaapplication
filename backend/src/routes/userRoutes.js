@@ -10,7 +10,7 @@ const followRoutes = require('./followerRoutes')
 // Returns all the users with name
 router.get('/', async (req, res) => {
     try {
-        const response = await getAllUsersWithNames(userID);
+        const response = await getAllUsersWithNames();
         if (response.error) {
             res.status(500).json({ message: 'Server error', error: response.error });
         } else {
@@ -21,9 +21,21 @@ router.get('/', async (req, res) => {
     }
 });
 
-router.use('/:userId/userData', userDataRoutes);
-router.use('/:userId/followerRequest', followerRequestRoutes);
-router.use('/:userId/posts', postRoutes);
-router.use('/:userId/follower',followRoutes);
+router.use('/:userId/userData', (req, res, next) => {
+    res.locals.userId = req.params.userId;
+    next();
+}, userDataRoutes);
+router.use('/:userId/followerRequest', (req, res, next) => {
+    res.locals.userId = req.params.userId;
+    next();
+}, followerRequestRoutes);
+router.use('/:userId/posts', (req, res, next) => {
+    res.locals.params = req.params;
+    next();
+}, postRoutes);
+router.use('/:userId/follower', (req, res, next) => {
+    res.locals.userId = req.params.userId;
+    next();
+}, followRoutes);
 
 module.exports = router;

@@ -22,7 +22,7 @@ const router  = createBrowserRouter([
       {
         path: '/',
         element: (
-          <Protected authentication={false}>
+          <Protected authentication>
             <Home />
           </Protected>
         )
@@ -30,7 +30,7 @@ const router  = createBrowserRouter([
       {
         path: '/profile',
         element: (
-          <Protected authentication={false}>
+          <Protected authentication>
             <Profile />
           </Protected>
         )
@@ -38,7 +38,7 @@ const router  = createBrowserRouter([
       {
         path: '/profile/:userId',
         element: (
-          <Protected authentication={false}>
+          <Protected authentication>
             <Profile />
           </Protected>
         )
@@ -46,7 +46,7 @@ const router  = createBrowserRouter([
       {
         path: '/search',
         element: (
-          <Protected authentication={false}>
+          <Protected authentication>
             <Search />
           </Protected>
         )
@@ -78,7 +78,7 @@ const router  = createBrowserRouter([
       {
         path: '/addpost',
         element: (
-          <Protected authentication={false}>
+          <Protected authentication>
             <CreatePost />
           </Protected>
         )
