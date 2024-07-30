@@ -23,9 +23,13 @@ api.interceptors.response.use(
   response => response,
   error => {
     if (error.response && error.response.status === 401) {
-     // store.dispatch(logout());
+      // store.dispatch(logout());
       window.location.href = '/login';
-      alert('You are not logged in. Please log in to continue.');
+      toast.error('You are not logged in. Please log in to continue.');
+    } else if (error.response) {
+      toast.error(`Error: ${error.response.status} - ${error.response.data.message || 'Something went wrong'}`);
+    } else {
+      toast.error('Error: Network Error');
     }
     return Promise.reject(error);
   }

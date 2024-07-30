@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { useSelector } from 'react-redux';
+import  { toast } from 'react-toastify';
 import PostsFeed from './PostsFeed'; // Adjust the import path as necessary
 import Layout from '../components/Layout';
 import defaultProfilePic from '../metadata/pictures/default_profile_pic.jpg'
@@ -37,7 +38,7 @@ const Profile = () => {
           setFollowingStatus(userProfile.followingStatus);
         }
       } catch (error) {
-        console.log('Error while fetching profile information', error);
+        toast.error('Error while fetching profile information');
       }
     };
 
@@ -50,7 +51,7 @@ const Profile = () => {
       await followUser(currentUserId, userId);
       setFollowingStatus('unfollow'); // Update the status to 'unfollow'
     } catch (error) {
-      console.log('Error while following user', error);
+      toast.error("Error while following a user");
     }
   };
 
@@ -60,7 +61,7 @@ const Profile = () => {
       await unfollowUser(currentUserId,userId);
       setFollowingStatus('follow'); // Update the status to 'follow'
     } catch (error) {
-      console.log('Error while unfollowing user', error);
+      toast.error("Error while unfollowing a user");
     }
   };
 

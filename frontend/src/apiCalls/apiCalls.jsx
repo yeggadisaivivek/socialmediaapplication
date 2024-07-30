@@ -1,4 +1,5 @@
 import api from './api';
+import  { toast } from 'react-toastify';
 
 // Register a new user
 export const registerUser = async (userData) => {
@@ -151,17 +152,16 @@ export const fetchAllUsers = async () => {
   }
 }
 
-// Handle API errors
 const handleApiError = (error) => {
   if (error.response) {
     console.error('API Error:', error.response.data.message || error.response.statusText);
-    alert(error.response.data.message || 'An error occurred. Please try again.');
+    toast.error(error.response.data.message || 'An error occurred. Please try again.');
   } else if (error.request) {
     console.error('API Error: No response received from the server.');
-    alert('No response received from the server. Please try again.');
+    toast.error('No response received from the server. Please try again.');
   } else {
     console.error('API Error:', error.message);
-    alert('An error occurred. Please try again.');
+    toast.error('An error occurred. Please try again.');
   }
   throw error;
 };
