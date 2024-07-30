@@ -3,6 +3,7 @@ import { useSelector } from 'react-redux';
 import Layout from '../components/Layout';
 import { addPost, getPreSignedURL } from '../apiCalls/apiCalls';
 import { useNavigate } from 'react-router-dom';
+import  { toast } from 'react-toastify';
 import axios from 'axios';
 
 const CreatePost = () => {
@@ -50,7 +51,7 @@ const CreatePost = () => {
         });
         profilePicKey = key;
       } catch (error) {
-        console.error('Error uploading file:', error);
+        toast.error("Error uploading file");
         return; // Exit if file upload fails
       }
     }
@@ -59,7 +60,7 @@ const CreatePost = () => {
       const response = await addPost(userId, { "caption": formData.caption, "mediaType": formData.mediaType,"profilePicUrl": profilePicKey });
       navigate('/');
     } catch (error) {
-      console.error('Error Uploading post:', error);
+      toast.error("Error Uploading post");
     }
   };
 

@@ -4,6 +4,7 @@ import { fetchUserDetails, getPreSignedURL, updateUserDetails } from '../apiCall
 import axios from 'axios';
 import { setUsername } from '../redux/authSlice';
 import defaultProfilePic from '../metadata/pictures/default_profile_pic.jpg'
+import { toast } from 'react-toastify';
 
 const Bio = () => {
   const dispatch = useDispatch();
@@ -47,7 +48,7 @@ const Bio = () => {
           dispatch(setUsername({username : userDetails.name}))
         }
       } catch (error) {
-        console.error('Error fetching user details:', error);
+        toast.error("Error in fetching user details")
       }
     }
 
@@ -92,8 +93,8 @@ const Bio = () => {
         });
         profilePicKey = key;
       } catch (error) {
-        console.error('Error uploading file:', error);
-        return; // Exit if file upload fails
+        toast.error('Error uploading file')
+        return;
       }
     }
 
@@ -114,7 +115,7 @@ const Bio = () => {
       }
       setEditMode(false);
     } catch (error) {
-      console.error('Error updating profile:', error);
+      toast.error('Error updating profile:');
     }
   };
 

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import ReactSelect from 'react-select';
 import Layout from '../components/Layout';
 import { fetchAllUsers } from '../apiCalls/apiCalls';
+import { toast } from 'react-toastify';
 
 const Search = () => {
   const navigate = useNavigate();
@@ -21,13 +22,13 @@ const Search = () => {
             value: user.id
           }));
           
-          setUsers(formattedUsers); // Set formatted users once
+          setUsers(formattedUsers);
         } else {
-          setUsers([]); // Ensure users is set as an empty array if response is not an array
+          setUsers([]);
         }
       } catch (error) {
-        console.error('Error fetching users:', error);
-        setUsers([]); // Ensure users is set as an empty array in case of error
+        toast.error("Error while fetching users");
+        setUsers([]);
       }
     };
     getAllUsers();

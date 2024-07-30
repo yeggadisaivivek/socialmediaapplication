@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { addComment, likeOrUnlikePost, fetchAllPosts, deletePost } from '../apiCalls/apiCalls';
 import { useSelector } from 'react-redux';
 import { FaEllipsisH, FaHeart, FaCommentDots } from 'react-icons/fa';
+import { toast } from 'react-toastify';
 
 const PostsFeed = ({ postFromParent, flag }) => {
   const [posts, setPosts] = useState([]);
@@ -24,7 +25,7 @@ const PostsFeed = ({ postFromParent, flag }) => {
         }
       }
     } catch (error) {
-      console.error('Error fetching user details:', error);
+      toast.error('Error fetching user details');
     }
   }, [flag, postFromParent]);
 
@@ -49,7 +50,7 @@ const PostsFeed = ({ postFromParent, flag }) => {
     })
       );}
     } catch (error) {
-      console.error('Error liking post:', error);
+      toast.error("Error while liking the post");
     }
   };
 
@@ -65,7 +66,7 @@ const PostsFeed = ({ postFromParent, flag }) => {
         )
       );}
     } catch (error) {
-      console.error('Error unliking post:', error);
+      toast.error("Error while unliking the post");
     }
   }, [userId]);
 
@@ -80,7 +81,7 @@ const PostsFeed = ({ postFromParent, flag }) => {
         )
       );
     } catch (error) {
-      console.error('Error adding comment:', error);
+      toast.error("Error while adding a comment");
     }
   }, []);
 
@@ -109,7 +110,7 @@ const PostsFeed = ({ postFromParent, flag }) => {
       setMenuOpen({});
       await getAllPosts(userId);
     } catch (error) {
-      console.error('Error deleting the post:', error);
+      toast.error('Error while deleting the post');
     }
   };
 
