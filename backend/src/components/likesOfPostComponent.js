@@ -52,10 +52,9 @@ const getUsersWhoLikedPost = async (postId) => {
 };
 
 const likeOrUnlikePost = async (userId, postId, action) => {
-    const connection = await db.getConnection();
+    const connection = db;
 
     try {
-        await connection.beginTransaction();
 
         const sqlSelectLikes = `SELECT liked_by_users FROM likes_of_post WHERE post_id = ?`;
         const sqlUpdateLikes = `UPDATE likes_of_post SET liked_by_users = ? WHERE post_id = ?`;
@@ -73,17 +72,19 @@ const likeOrUnlikePost = async (userId, postId, action) => {
                 resolve(results[0]);
             });
         });
-
-        let likedByUsers = JSON.parse(likesResult.liked_by_users || '[]');
-
+        let likedByUsers = JSON.parse(JSON.stringify(likesResult.liked_by_users) || '[]');
         if (action === 'like') {
             if (!likedByUsers.includes(userId)) {
                 likedByUsers.push(userId);
             } else {
-                return { message: 'User already liked the post' };
+                return { message: 'Liked/Unliked already' };
             }
         } else if (action === 'unlike') {
-            likedByUsers = likedByUsers.filter(id => id !== userId);
+            if(likedByUsers.includes(userId)){
+                likedByUsers = likedByUsers.filter(id => id !== userId);
+            } else {
+                return { message: 'Liked/Unliked already' };
+            }
         } else {
             throw new Error('Invalid action');
         }
@@ -110,13 +111,13 @@ const likeOrUnlikePost = async (userId, postId, action) => {
             });
         });
 
-        await connection.commit();
-        connection.release();
+        //await connection.commit();
+        //connection.release();
 
         return { message: 'Post liked/unliked successfully' };
     } catch (error) {
-        await connection.rollback();
-        connection.release();
+       // await connection.rollback();
+        //connection.release();
         return { error: error.message };
     }
 };

@@ -70,7 +70,7 @@ const addCommentToPost = async (postId, userId, comment) => {
 
         let comments = [];
         if (commentsResult.length > 0) {
-            comments = JSON.parse(commentsResult[0].comments || '[]');
+            comments = JSON.parse(JSON.stringify(commentsResult[0].comments) || '[]');
         }
 
         // Add the new comment

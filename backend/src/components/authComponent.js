@@ -5,9 +5,7 @@ const db = require('../db');
 // Register a new user
 const register = (userData) => {
   return new Promise(async (resolve, reject) => {
-    const { username, password } = userData;
-    console.log("username::::"+username)
-    console.log("password::::"+password)
+    const { username, password, name } = userData;
 
     try {
       // Check if username already exists
@@ -31,7 +29,27 @@ const register = (userData) => {
             return reject({ error: err.message });
           }
 
-          resolve({ message: 'User registered successfully' });
+          const insertUserDataSql = 'INSERT INTO user_data SET ?';
+          const newUserId = result.insertId;
+          // Insert a new row in the user_data table
+          const newUserData = { user_id: newUserId, name }
+          db.query(insertUserDataSql, newUserData, (err, result) => {
+            if (err) {
+              return reject({ error: err.message });
+            }
+
+            const insertFollowersSql = 'INSERT INTO followers SET ?';
+
+            // Insert a new row in the user_data table
+            const newFollowerData = { user_id: newUserId }
+            db.query(insertFollowersSql, newFollowerData, (err, result) => {
+              if (err) {
+                return reject({ error: err.message });
+              }
+
+              resolve({ message: 'User registered successfully' });
+            });
+          });
         });
       });
     } catch (error) {
@@ -65,7 +83,7 @@ const login = (userData) => {
       const payload = { id: user.id, username: user.username };
       const token = jwt.sign(payload, 'your_jwt_secret', { expiresIn: '1h' });
 
-      resolve({ token });
+      resolve({ token, userId: user.id });
     });
   });
 };

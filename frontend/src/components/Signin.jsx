@@ -7,7 +7,6 @@ import Logo from "./Logo"
 import {useForm} from "react-hook-form"
 import {useDispatch} from "react-redux"
 import {login as authLogin} from "../redux/authSlice"
-import authService from "../appwrite/auth"
 import { loginUser } from "../apiCalls/apiCalls"
 
 function Signin() {
@@ -20,7 +19,7 @@ function Signin() {
         setError("")
         try {
             const session = await loginUser(data)
-            dispatch(authLogin());
+            dispatch(authLogin({userId : session?.userId}));
             navigate('/');
         } catch (error) {
             setError(error.message)
@@ -28,7 +27,7 @@ function Signin() {
     }
 
     return (
-        <div className="flex items-center justify-center w-full">
+        <div className="flex items-center justify-center w-full min-h-screen">
             <div className={`mx-auto w-full max-w-lg bg-gray-100 rounded-xl p-10 border border-black/10`}>
                 <div className="mb-2 flex justify-center">
                     <span className="inline-block w-full max-w-[100px]">

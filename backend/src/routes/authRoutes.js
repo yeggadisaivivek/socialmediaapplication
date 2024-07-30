@@ -4,7 +4,6 @@ const router = express.Router();
 
 router.post('/signup', async (req, res) => {
   try {
-    console.log("")
     const result = await register(req.body);
     res.status(201).json(result);
   } catch (error) {

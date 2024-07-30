@@ -1,10 +1,11 @@
 const express = require('express');
-const { getCommentsByPostId } = require('../components/commentOfPostComponent');
+const { getCommentsByPostId, addCommentToPost } = require('../components/commentOfPostComponent');
+const { use } = require('./authRoutes');
 const router = express.Router();
 
 // Lists all the comments for a post
 router.get('/', async (req, res) => {
-    const { postId } = req.params;
+    const { userId, postId } = res.locals.params;;
 
     try {
         const response = await getCommentsByPostId(postId);
@@ -19,9 +20,8 @@ router.get('/', async (req, res) => {
 });
 
 router.post('/', async (req, res) => {
-    const { postId, userId } = req.params;
+    const { userId, postId } = res.locals.params;
     const { comment } = req.body;
-
     try {
         const response = await addCommentToPost(postId, userId, comment);
         if (response.error) {
