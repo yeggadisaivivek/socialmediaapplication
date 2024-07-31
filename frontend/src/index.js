@@ -1,98 +1,70 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App';
-import  { createBrowserRouter, RouterProvider } from 'react-router-dom';
+import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { Provider } from 'react-redux';
 import store from './redux/store';
 import Home from './pages/Home';
-import Protected from './components/Protected';
 import Login from './pages/Login';
 import AllPosts from './pages/PostsFeed';
-import EditPost from './pages/EditPost';
 import SignupPage from './pages/Signup';
 import Profile from './pages/Profile';
 import CreatePost from './pages/CreatePost';
 import Search from './pages/Search';
 
-const router  = createBrowserRouter([
+const router = createBrowserRouter([
   {
     path: '/',
     element: <App />,
     children: [
       {
         path: '/',
-        element: (
-          <Protected authentication>
-            <Home />
-          </Protected>
-        )
+        element: <Home />
       },
       {
         path: '/profile',
         element: (
-          <Protected authentication>
-            <Profile />
-          </Protected>
+          <Profile />
         )
       },
       {
         path: '/profile/:userId',
         element: (
-          <Protected authentication>
-            <Profile />
-          </Protected>
+          <Profile />
         )
       },
       {
         path: '/search',
         element: (
-          <Protected authentication>
-            <Search />
-          </Protected>
+          <Search />
         )
       },
       {
         path: '/login',
         element: (
-          <Protected authentication={false}>
-            <Login />
-          </Protected>
+          <Login />
         )
       },
       {
         path: '/signup',
         element: (
-          <Protected authentication={false}>
-            <SignupPage />
-          </Protected>
+          <SignupPage />
         )
       },
       {
         path: '/allposts',
         element: (
-          <Protected authentication>
-            <AllPosts />
-          </Protected>
+          <AllPosts />
         )
       },
       {
         path: '/addpost',
         element: (
-          <Protected authentication>
-            <CreatePost />
-          </Protected>
+          <CreatePost />
         )
       },
-      {
-        path: '/editpost/:slug',
-        element: (
-          <Protected authentication>
-            <EditPost />
-          </Protected>
-        )
-      }
     ]
   }
 ])
@@ -101,7 +73,7 @@ const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
   <React.StrictMode>
     <Provider store={store}>
-      <RouterProvider router={router}/>
+      <RouterProvider router={router} />
       <ToastContainer position="top-right" autoClose={5000} hideProgressBar={false} newestOnTop={false} closeOnClick rtl={false} pauseOnFocusLoss draggable pauseOnHover />
     </Provider>
   </React.StrictMode>

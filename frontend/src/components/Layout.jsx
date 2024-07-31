@@ -3,10 +3,13 @@ import Modal from './Modal';
 import Navigation from './Navigation';
 import { FaAlignJustify } from 'react-icons/fa6'
 import Bio from './Bio';
+import { useSelector } from 'react-redux';
+import defaultImage from '../metadata/pictures/default_profile_pic.jpg'
 
 const Layout = ({ children }) => {
   const [showNav, setShowNav] = useState(false);
   const [showBio, setShowBio] = useState(false);
+  const imageUrl = useSelector((state)=> state.profile.user.profile_pic_url) || defaultImage;
   const [isDesktop, setIsDesktop] = useState(window.matchMedia("(min-width: 768px)").matches);
 
   useEffect(() => {
@@ -27,7 +30,7 @@ const Layout = ({ children }) => {
         </button>
         <h1 className="text-lg">Social Media Application</h1>
         <img
-          src="/path/to/profile-pic.jpg"
+          src={imageUrl}
           alt="Profile"
           className="w-8 h-8 rounded-full cursor-pointer"
           onClick={() => setShowBio(true)}
