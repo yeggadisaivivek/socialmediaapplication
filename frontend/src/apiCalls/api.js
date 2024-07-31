@@ -23,7 +23,6 @@ api.interceptors.response.use(
   response => response,
   error => {
     if (error.response && error.response.status === 401) {
-      // store.dispatch(logout());
       window.location.href = '/login';
       toast.error('You are not logged in. Please log in to continue.');
     } else if (error.response) {

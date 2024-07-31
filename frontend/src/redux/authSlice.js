@@ -2,7 +2,7 @@ import { createSlice } from "@reduxjs/toolkit";
 
 const initialState = {
     status: false,
-    userId: null,
+    userId: localStorage.getItem('userId'),
     username: ''
 };
 
@@ -17,6 +17,7 @@ const authSlice = createSlice({
         logout: (state,action) => {
             state.status = false;
             state.userId = null;
+            localStorage.removeItem('userId'),
             state.username = '';
         },
         setUsername: (state,action) => {

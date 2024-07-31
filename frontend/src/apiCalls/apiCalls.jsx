@@ -16,7 +16,9 @@ export const loginUser = async (credentials) => {
   try {
     const response = await api.post('/auth/login', credentials);
     const token = response.data.token;
+    const userId = response.data.userId;
     localStorage.setItem('token', token);
+    localStorage.setItem('userId', userId);
     return response.data;
   } catch (error) {
     handleApiError(error);

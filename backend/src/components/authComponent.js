@@ -1,6 +1,7 @@
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const db = require('../db');
+const config = require('../config');
 
 // Register a new user
 const register = (userData) => {
@@ -81,7 +82,7 @@ const login = (userData) => {
       }
 
       const payload = { id: user.id, username: user.username };
-      const token = jwt.sign(payload, 'your_jwt_secret', { expiresIn: '1h' });
+      const token = jwt.sign(payload, config.jwt.secret, { expiresIn: '1h' });
 
       resolve({ token, userId: user.id });
     });

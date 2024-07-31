@@ -308,7 +308,7 @@ const allPosts = async (userID) => {
             (SELECT post_id, JSON_LENGTH(comments) AS comments_count, comments
              FROM comments_of_post) c ON p.id = c.post_id
         WHERE 
-            p.user_id IN (10)
+            p.user_id IN (?)
         ORDER BY 
             p.created_at DESC
     `;
