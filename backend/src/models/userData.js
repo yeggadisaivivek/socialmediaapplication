@@ -59,11 +59,11 @@ const getUserDataByUserID = async (userID, followerId) => {
               reject({ error: err.message });
             } else {
               if (followerId) {
-                db.query(followerCountQueryWithFollowingStatus, [followerId, userID], (err, result) => {
+                db.query(followerCountQueryWithFollowingStatus, [userID, followerId], (err, result) => {
                   if (err) {
                     reject({ error: err.message });
                   } else {
-                    results[0].isFollower = result[0].isFollower; // Add following status to results
+                    results[0].isFollower = result[0].isFollower; 
                     resolve(results[0]);
                   }
                 });
@@ -80,7 +80,7 @@ const getUserDataByUserID = async (userID, followerId) => {
         ...userResults,
         followingStatus: followerCountResults?.isFollower,
         number_of_posts: postCountResults,
-        number_of_followers: followerCountResults?.number_of_followers
+        number_of_followers: followerCountResults?.number_of_followers ? Number(followerCountResults?.number_of_followers) : 0
       };
   
       return mergedResults;

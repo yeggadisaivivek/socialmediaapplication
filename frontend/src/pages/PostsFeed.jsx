@@ -4,10 +4,12 @@ import { addComment, likeOrUnlikePost, fetchAllPosts, deletePost } from '../apiC
 import { useSelector } from 'react-redux';
 import { FaEllipsisH, FaHeart, FaCommentDots } from 'react-icons/fa';
 import { toast } from 'react-toastify';
+import LoadingSpinner from '../components/LoadingSpinner';
 
 const PostsFeed = ({ postFromParent, flag }) => {
   const [posts, setPosts] = useState([]);
   const [visibleComments, setVisibleComments] = useState({});
+  const [loading, setLoading] = useState(false);
   const [menuOpen, setMenuOpen] = useState({});
   const navigate = useNavigate();
   const userId = useSelector((state) => state.auth.userId);
@@ -16,6 +18,7 @@ const PostsFeed = ({ postFromParent, flag }) => {
 
   const getAllPosts = useCallback(async (userId) => {
     try {
+      setLoading(true);
       if (flag) {
         setPosts(postFromParent || []);
       } else {
@@ -24,7 +27,9 @@ const PostsFeed = ({ postFromParent, flag }) => {
           setPosts(allPosts.posts);
         }
       }
+      setLoading(false);
     } catch (error) {
+      setLoading(false);
       toast.error('Error fetching user details');
     }
   }, [flag, postFromParent]);
@@ -41,14 +46,15 @@ const PostsFeed = ({ postFromParent, flag }) => {
   const handleLike = async (postId) => {
     try {
       const response = await likeOrUnlikePost(userId, postId, "like");
-      if(response !== "Liked/Unliked already") {
-      setPosts((prevPosts) =>
-        prevPosts.map((post) => {
-          return post.id === postId
-            ? { ...post, likes_count: Number(post?.likes_count) + 1 }
-            : post
-    })
-      );}
+      if (response !== "Liked/Unliked already") {
+        setPosts((prevPosts) =>
+          prevPosts.map((post) => {
+            return post.id === postId
+              ? { ...post, likes_count: Number(post?.likes_count) + 1 }
+              : post
+          })
+        );
+      }
     } catch (error) {
       toast.error("Error while liking the post");
     }
@@ -57,14 +63,15 @@ const PostsFeed = ({ postFromParent, flag }) => {
   const handleUnlike = useCallback(async (postId) => {
     try {
       const response = await likeOrUnlikePost(userId, postId, "unlike");
-      if(response !== "Liked/Unliked already") {
-      setPosts((prevPosts) =>
-        prevPosts.map((post) =>
-          post.id === postId
-            ? { ...post, likes_count: post.likes_count - 1}
-            : post
-        )
-      );}
+      if (response !== "Liked/Unliked already") {
+        setPosts((prevPosts) =>
+          prevPosts.map((post) =>
+            post.id === postId
+              ? { ...post, likes_count: post.likes_count - 1 }
+              : post
+          )
+        );
+      }
     } catch (error) {
       toast.error("Error while unliking the post");
     }
@@ -116,117 +123,123 @@ const PostsFeed = ({ postFromParent, flag }) => {
 
   return (
     <div className="container mx-auto p-4">
-      {posts?.length === 0 ? (
-        <div className="flex flex-col items-center">
-          <p>No posts found.</p>
-          {!flag ? (
-            <button
-              onClick={handleCreatePost}
-              className="mt-4 px-4 py-2 bg-blue-500 text-white rounded"
-            >
-              Create a New Post
-            </button>
-          ) : null}
-        </div>
+      {loading ? (
+        <LoadingSpinner />
       ) : (
-        posts.map((post) => (
-          <div className="bg-white shadow-lg rounded-lg mb-6 text-black relative" key={post.id}>
-            <div className="flex items-center justify-between p-4">
-              <div className="flex items-center">
-                <img src={post.profile_pic_url} alt={post.name} className="w-10 h-10 rounded-full mr-3" />
-                <div>
-                  <h2 className="text-sm font-bold">{post.name}</h2>
-                </div>
-              </div>
-              <button onClick={() => toggleMenu(post.id)} className="focus:outline-none">
-                <FaEllipsisH />
-              </button>
-              {menuOpen[post.id] && (
-                <div className="absolute top-12 right-4 bg-white shadow-md rounded p-2">
-                  <button
-                    onClick={() => handleDeletePost(post.id)}
-                    className="text-red-500"
-                  >
-                    Delete Post
-                  </button>
-                </div>
-              )}
+        <>
+          {posts?.length === 0 ? (
+            <div className="flex flex-col items-center">
+              <p>No posts found.</p>
+              {!flag ? (
+                <button
+                  onClick={handleCreatePost}
+                  className="mt-4 px-4 py-2 bg-blue-500 text-white rounded"
+                >
+                  Create a New Post
+                </button>
+              ) : null}
             </div>
-            {post.media_type === 'image' ? (
-              <img src={post.post_url} alt={post.caption} className="w-full rounded-b-lg" />
-            ) : (
-              <video controls className="w-full rounded-b-lg">
-                <source src={post.post_url} type="video/mp4" />
-                <source src={post.post_url} type="video/quicktime" />
-                Your browser does not support the video tag.
-              </video>
-            )}
-            <div className="p-4">
-              <p className="text-sm mb-2">
-                <span className="font-bold">{post.name}</span> {post.caption}
-              </p>
-              <div className="mt-2 flex justify-between text-sm text-gray-600">
-                <div className="flex items-center">
-                  <span className="font-bold">{post.likes_count}</span> likes
-                    <button
-                      onClick={() => handleUnlike(post.id)}
-                      className="ml-2 text-gray-500"
-                    >
-                      Unlike
-                    </button>
-                    <button
-                      onClick={() => handleLike(post.id)}
-                      className="ml-2 text-red-500"
-                    >
-                      <FaHeart />
-                    </button>
-                </div>
-                <div className="flex items-center">
-                  <span className="font-bold">{post.comments_count}</span> comments
-                  <FaCommentDots className="ml-2" />
-                </div>
-              </div>
-              <div className="mt-4">
-                {post.comments && post.comments.slice(0, visibleComments[post.id] || 2).map(comment => (
-                  <div key={comment.id} className="flex justify-between items-center mb-2">
-                    <p className="text-sm"><span className="font-bold">{comment.username}</span> {comment.comment}</p>
+          ) : (
+            posts.map((post) => (
+              <div className="bg-white shadow-lg rounded-lg mb-6 text-black relative" key={post.id}>
+                <div className="flex items-center justify-between p-4">
+                  <div className="flex items-center">
+                    <img src={post.profile_pic_url} alt={post.name} className="w-10 h-10 rounded-full mr-3" />
+                    <div>
+                      <h2 className="text-sm font-bold">{post.name}</h2>
+                    </div>
                   </div>
-                ))}
-                {post.comments && post.comments.length > (visibleComments[post.id] || 2) && (
-                  <button
-                    onClick={() => handleShowMoreComments(post.id)}
-                    className="text-blue-500"
-                  >
-                    Show more comments
+                  <button onClick={() => toggleMenu(post.id)} className="focus:outline-none">
+                    <FaEllipsisH />
                   </button>
+                  {menuOpen[post.id] && (
+                    <div className="absolute top-12 right-4 bg-white shadow-md rounded p-2">
+                      <button
+                        onClick={() => handleDeletePost(post.id)}
+                        className="text-red-500"
+                      >
+                        Delete Post
+                      </button>
+                    </div>
+                  )}
+                </div>
+                {post.media_type === 'image' ? (
+                  <img src={post.post_url} alt={post.caption} className="w-full rounded-b-lg" />
+                ) : (
+                  <video controls className="w-full rounded-b-lg">
+                    <source src={post.post_url} type="video/mp4" />
+                    <source src={post.post_url} type="video/quicktime" />
+                    Your browser does not support the video tag.
+                  </video>
                 )}
-                <form onSubmit={(e) => {
-                  e.preventDefault();
-                  const comment = {
-                    id: Date.now(),
-                    username,
-                    comment: e.target.elements.comment.value
-                  };
-                  handleAddComment(post.id, comment);
-                  e.target.reset();
-                }} className="flex items-center mt-2">
-                  <input
-                    name="comment"
-                    type="text"
-                    placeholder="Add a comment..."
-                    className="w-full p-2 border border-gray-300 rounded h-10"
-                  />
-                  <button
-                    type="submit"
-                    className="ml-2 px-4 py-2 bg-blue-500 text-white rounded h-10"
-                  >
-                    Add Comment
-                  </button>
-                </form>
+                <div className="p-4">
+                  <p className="text-sm mb-2">
+                    <span className="font-bold">{post.name}</span> {post.caption}
+                  </p>
+                  <div className="mt-2 flex justify-between text-sm text-gray-600">
+                    <div className="flex items-center">
+                      <span className="font-bold">{post.likes_count}</span> likes
+                      <button
+                        onClick={() => handleUnlike(post.id)}
+                        className="ml-2 text-gray-500"
+                      >
+                        Unlike
+                      </button>
+                      <button
+                        onClick={() => handleLike(post.id)}
+                        className="ml-2 text-red-500"
+                      >
+                        <FaHeart />
+                      </button>
+                    </div>
+                    <div className="flex items-center">
+                      <span className="font-bold">{post.comments_count}</span> comments
+                      <FaCommentDots className="ml-2" />
+                    </div>
+                  </div>
+                  <div className="mt-4">
+                    {post.comments && post.comments.slice(0, visibleComments[post.id] || 2).map(comment => (
+                      <div key={comment.id} className="flex justify-between items-center mb-2">
+                        <p className="text-sm"><span className="font-bold">{comment.username}</span> {comment.comment}</p>
+                      </div>
+                    ))}
+                    {post.comments && post.comments.length > (visibleComments[post.id] || 2) && (
+                      <button
+                        onClick={() => handleShowMoreComments(post.id)}
+                        className="text-blue-500"
+                      >
+                        Show more comments
+                      </button>
+                    )}
+                    <form onSubmit={(e) => {
+                      e.preventDefault();
+                      const comment = {
+                        id: Date.now(),
+                        username,
+                        comment: e.target.elements.comment.value
+                      };
+                      handleAddComment(post.id, comment);
+                      e.target.reset();
+                    }} className="flex items-center mt-2">
+                      <input
+                        name="comment"
+                        type="text"
+                        placeholder="Add a comment..."
+                        className="w-full p-2 border border-gray-300 rounded h-10"
+                      />
+                      <button
+                        type="submit"
+                        className="ml-2 px-4 py-2 bg-blue-500 text-white rounded h-10"
+                      >
+                        Add Comment
+                      </button>
+                    </form>
+                  </div>
+                </div>
               </div>
-            </div>
-          </div>
-        ))
+            ))
+          )}
+        </>
       )}
     </div>
   );

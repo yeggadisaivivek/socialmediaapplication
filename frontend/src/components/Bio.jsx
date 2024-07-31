@@ -1,38 +1,36 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchUserDetails, getPreSignedURL, updateUserDetails } from '../apiCalls/apiCalls';
 import axios from 'axios';
 import { setUsername } from '../redux/authSlice';
-import defaultProfilePic from '../metadata/pictures/default_profile_pic.jpg'
+import defaultProfilePic from '../metadata/pictures/default_profile_pic.jpg';
 import { toast } from 'react-toastify';
+import { updateProfile } from '../redux/profileSlice';
 
 const Bio = () => {
   const dispatch = useDispatch();
-  const isMounted = useRef(false);
   const userId = useSelector((state) => state.auth.userId);
+  const userProfile = useSelector((state) => state.profile.user); // Get user details from Redux
 
+  const [saveButtonDisabled, setSaveButtonDisabled] = useState(true);
+  const [editMode, setEditMode] = useState(false);
+  const [formData, setFormData] = useState({
+    bio: '',
+    profilePicture: defaultProfilePic,
+    profilePictureFile: null,
+    profilePictureKey: '',
+  });
   const [stats, setStats] = useState({
     followersCount: 0,
     postsCount: 0,
   });
-  const [saveButtonDisabled,setSaveButtonDisabled] = useState(true)
-  const [editMode, setEditMode] = useState(false);
-  const [formData, setFormData] = useState({
-    bio: '',
-    profilePicture: '',
-    profilePictureFile: null, // to store the file object
-    profilePictureKey: '', // key to store the S3 key
-  });
 
   useEffect(() => {
-    if (isMounted.current) {
-      return;
-    }
-
     const getUserDetails = async () => {
       try {
         const userDetails = await fetchUserDetails(userId);
-        // Update state with fetched details
+        dispatch(updateProfile({ userDetails }));
+        // Initialize state with fetched details
         if (userDetails) {
           setFormData({
             name: userDetails.name || 'No name',
@@ -44,17 +42,31 @@ const Bio = () => {
             followersCount: userDetails.number_of_followers || 0,
             postsCount: userDetails.number_of_posts || 0,
           });
-
-          dispatch(setUsername({username : userDetails.name}))
+          dispatch(setUsername({ username: userDetails.name }));
         }
       } catch (error) {
-        toast.error("Error in fetching user details")
+        toast.error("Error fetching user details");
       }
-    }
+    };
 
     getUserDetails();
-    isMounted.current = true;
-  }, [userId]);
+  }, [userId, dispatch]);
+
+  useEffect(() => {
+    // Update local state if userProfile in Redux changes
+    if (userProfile) {
+      setFormData({
+        name: userProfile.name || 'No name',
+        bio: userProfile.bio || '',
+        profilePicture: userProfile.profile_pic_url || defaultProfilePic,
+        profilePictureKey: userProfile.profilePictureKey || '',
+      });
+      setStats({
+        followersCount: userProfile.number_of_followers || 0,
+        postsCount: userProfile.number_of_posts || 0,
+      });
+    }
+  }, [userProfile]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -67,12 +79,12 @@ const Bio = () => {
 
   const handleFileChange = (e) => {
     const file = e.target.files[0];
-    saveButtonDisabled(false)
+    setSaveButtonDisabled(false);
     if (file) {
       setFormData((prevData) => ({
         ...prevData,
         profilePicture: URL.createObjectURL(file),
-        profilePictureFile: file, // store the file object
+        profilePictureFile: file,
       }));
     }
   };
@@ -84,7 +96,7 @@ const Bio = () => {
 
     if (formData.profilePictureFile) {
       try {
-        const response = await getPreSignedURL(formData.profilePictureFile.name, formData.profilePictureFile.type)
+        const response = await getPreSignedURL(formData.profilePictureFile.name, formData.profilePictureFile.type);
         const { url, key } = response;
         await axios.put(url, formData.profilePictureFile, {
           headers: {
@@ -93,34 +105,26 @@ const Bio = () => {
         });
         profilePicKey = key;
       } catch (error) {
-        toast.error('Error uploading file')
+        toast.error('Error uploading file');
         return;
       }
     }
 
     try {
       await updateUserDetails(userId, formData.bio, profilePicKey);
+      // Fetch and update user details in Redux after a successful update
       const updatedUserDetails = await fetchUserDetails(userId);
       if (updatedUserDetails) {
-        setFormData({
-          name: updatedUserDetails.name || 'No name',
-          bio: updatedUserDetails.bio || '',
-          profilePicture: updatedUserDetails.profilePicture || '',
-          profilePictureKey: updatedUserDetails.profilePictureKey || '',
-        });
-        setStats({
-          followersCount: updatedUserDetails.number_of_followers || 0,
-          postsCount: updatedUserDetails.number_of_posts || 0,
-        });
+        dispatch(updateProfile({ userDetails: updatedUserDetails }));
+        setEditMode(false);
       }
-      setEditMode(false);
     } catch (error) {
-      toast.error('Error updating profile:');
+      toast.error('Error updating profile');
     }
   };
 
   return (
-    <div className="p-4 ">
+    <div className="p-4">
       {editMode ? (
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
