@@ -1,19 +1,21 @@
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { useSelector } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import  { toast } from 'react-toastify';
 import PostsFeed from './PostsFeed'; // Adjust the import path as necessary
 import Layout from '../components/Layout';
 import defaultProfilePic from '../metadata/pictures/default_profile_pic.jpg'
 import {  fetchUserDetails, fetchPostsOfUser, followUser, unfollowUser } from '../apiCalls/apiCalls'; // Adjust the import path as necessary
+import { decreaseFollowingCount, increaseFollowingCount, updateProfile } from '../redux/profileSlice';
 
 const Profile = () => {
   const currentUserId = useSelector((state) => state.auth.userId);
+  const dispatch = useDispatch();
   const { userId } = useParams();
   
   const [user, setUser] = useState(null);
   const [posts, setPosts] = useState([]);
-  const [followingStatus, setFollowingStatus] = useState('follow'); // follow/unfollow/requested
+  const [followingStatus, setFollowingStatus] = useState(null); // follow/unfollow/requested
 
   useEffect(() => {
     const fetchProfileData = async () => {
@@ -29,13 +31,9 @@ const Profile = () => {
           userProfile.profile_pic_url = defaultProfilePic
         }
         setUser(userProfile);
+        setFollowingStatus(userProfile?.followingStatus);
         if(userPosts?.posts) {
           setPosts(userPosts.posts);
-        }
-
-        // Set the following status based on the API response
-        if (currentUserId !== Number(userId) && userProfile.followingStatus) {
-          setFollowingStatus(userProfile.followingStatus);
         }
       } catch (error) {
         toast.error('Error while fetching profile information');
@@ -49,7 +47,8 @@ const Profile = () => {
     try {
       // Call your API to follow the user
       await followUser(currentUserId, userId);
-      setFollowingStatus('unfollow'); // Update the status to 'unfollow'
+      dispatch(increaseFollowingCount());
+      setFollowingStatus(1); // Update the status to 'unfollow'
     } catch (error) {
       toast.error("Error while following a user");
     }
@@ -59,7 +58,8 @@ const Profile = () => {
     try {
       // Call your API to unfollow the user
       await unfollowUser(currentUserId,userId);
-      setFollowingStatus('follow'); // Update the status to 'follow'
+      dispatch(decreaseFollowingCount());
+      setFollowingStatus(0); // Update the status to 'follow'
     } catch (error) {
       toast.error("Error while unfollowing a user");
     }
@@ -95,22 +95,22 @@ const Profile = () => {
           </div>
         </div>
 
-        {/* Follow/Unfollow/Requested Button */}
         {userId && currentUserId !== Number(userId) && (
           <div className="mt-4">
-            {followingStatus === 'requested' && (
-              <button className="px-4 py-2 bg-gray-500 text-white rounded" disabled>
-                Requested
-              </button>
-            )}
-            {!followingStatus && followingStatus !== 1 && (
-              <button className="px-4 py-2 bg-blue-500 text-white rounded" onClick={handleFollow}>
-                Follow
-              </button>
-            )}
-            {followingStatus === 1 && (
-              <button className="px-4 py-2 bg-gray-500 text-white rounded" onClick={handleUnfollow}>
+            {followingStatus == 1 && (
+              <button
+                className="px-4 py-2 bg-gray-500 text-white rounded"
+                onClick={handleUnfollow}
+              >
                 Unfollow
+              </button>
+            )}
+            {(followingStatus == 0 || followingStatus === null) && (
+              <button
+                className="px-4 py-2 bg-blue-500 text-white rounded"
+                onClick={handleFollow}
+              >
+                Follow
               </button>
             )}
           </div>

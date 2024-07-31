@@ -26,7 +26,6 @@ const createPost = async (userID, caption, mediaType, profilePicUrl) => {
     //connection.release();
     try {
         //await connection.beginTransaction();
-        console.log("begin transcation:::")
 
         // Insert new post
         const newPost = {

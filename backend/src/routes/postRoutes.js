@@ -6,7 +6,6 @@ const likeRoutes = require('./likesOfPostRoutes');
 const commentRoutes = require('./commentsOfPostRoutes');
 
 router.use('/' ,(req,res,next) => {
-    console.log("posts middleware hit")
     next();
 })
 
