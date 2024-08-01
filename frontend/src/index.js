@@ -11,6 +11,7 @@ import SignupPage from './pages/Signup';
 import Profile from './pages/Profile';
 import CreatePost from './pages/CreatePost';
 import Search from './pages/Search';
+import FollowerRequests from './pages/FollowerRequest';
 
 const router = createBrowserRouter([
   {
@@ -37,6 +38,12 @@ const router = createBrowserRouter([
         path: '/search',
         element: (
           <Search />
+        )
+      },
+      {
+        path: '/follower-requests',
+        element: (
+          <FollowerRequests />
         )
       },
       {

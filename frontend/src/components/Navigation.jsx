@@ -72,6 +72,14 @@ const Navigation = () => {
           </li>
           <li>
             <Link 
+            to="/follower-requests" 
+            className="block bg-gray-200 rounded-lg px-4 py-2 text-center hover:bg-gray-300 transition duration-300"
+            onClick={(event) => handleNavigation(event, '/follower-requests')}>
+              Follower Requests
+            </Link>
+          </li>
+          <li>
+            <Link 
             to="/login" 
             onClick={handleSignOut} 
             className="block bg-red-200 rounded-lg px-4 py-2 text-center hover:bg-red-300 transition duration-300">

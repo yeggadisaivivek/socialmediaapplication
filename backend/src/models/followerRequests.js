@@ -23,22 +23,49 @@ const getAllFollowerRequestsForUser = (userId) => {
     }
 }
 
-// Creates a follower request in follower_requests table
-const createFollowerRequest = (userID, requestIdFrom) => {
-    try {
-        const newUserData = {
-            user_id: userID,
-            request_id_from: requestIdFrom,
-        }
-        const sql = `INSERT INTO ${FOLLOWER_REQUEST_TABLE_NAME} SET ?`;
-        return new Promise((resolve, reject) => {
-            db.query(sql, newUserData, (err, results) => {
-                if (err) {
-                    reject({ error: err.message });
-                }
-            });
-        });
+const handleFollowerRequest = async (userID, followerID, action) => {
+    const sqlSelectFollowers = `SELECT list_of_followers FROM followers WHERE user_id = ?`;
+    const sqlInsertFollowers = `INSERT INTO followers (user_id, list_of_followers) VALUES (?, ?)`;
+    const sqlUpdateFollowers = `UPDATE followers SET list_of_followers = ? WHERE user_id = ?`;
+    const sqlDeleteRequest = `DELETE FROM follower_request WHERE user_id = ? AND follower_id = ?`;
 
+    try {
+        if (action === 'accept') {
+            const [results] = await db.query(sqlSelectFollowers, [userID]);
+            if (!results[0].list_of_followers) {
+                // No followers record exists, create a new one
+                const newFollowers = JSON.stringify([followerID]);
+                await db.query(sqlInsertFollowers, [userID, newFollowers]);
+            } else {
+                // Followers record exists, update it
+                let followers = JSON.parse(JSON.stringify(results[0].list_of_followers) || '[]');
+                if (!followers.includes(followerID)) {
+                    followers.push(followerID);
+                    const updatedFollowers = JSON.stringify(followers);
+                    await db.query(sqlUpdateFollowers, [updatedFollowers, userID]);
+                } else {
+                    return { message: 'Follower already exists' };
+                }
+            }
+        }
+
+        // Remove the request from the follower_request table regardless of action
+        await db.query(sqlDeleteRequest, [userID, followerID]);
+
+        return { message: `Follower request ${action}ed successfully` };
+    } catch (error) {
+        return { error: error.message };
+    }
+};
+
+
+// Creates a follower request in follower_requests table
+const createFollowerRequest = async (userID, followerID) => {
+    const sqlInsertRequest = `INSERT INTO follower_request (user_id, follower_id) VALUES (?, ?)`;
+
+    try {
+        await db.query(sqlInsertRequest, [userID, followerID]);
+        return { message: 'Follower request stored successfully' };
     } catch (error) {
         return { error: error.message };
     }
@@ -61,4 +88,4 @@ const updateStatusOfFollowerRequest = (userID, requestIdFrom, status) => {
     }
 }
 
-module.exports = { getAllFollowerRequestsForUser, createFollowerRequest, updateStatusOfFollowerRequest };
+module.exports = { handleFollowerRequest, getAllFollowerRequestsForUser, createFollowerRequest, updateStatusOfFollowerRequest };

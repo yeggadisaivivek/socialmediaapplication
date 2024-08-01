@@ -8,8 +8,7 @@ const updateFollowers = async (userID, followerID) => {
     try {
         // Fetch current list of followers
         const [results] = await db.query(sqlSelect, [userID]);
-
-        if (results.length === 0) {
+        if (!results[0].list_of_followers) {
             // No followers record exists, create a new one
             const newFollowers = JSON.stringify([followerID]);
             await db.query(sqlInsert, [userID, newFollowers]);
@@ -42,9 +41,8 @@ const unfollowFollower = async (userID, followerID) => {
         if (results.length === 0) {
             throw new Error('User not found');
         }
-
         let followers = JSON.parse(JSON.stringify(results[0].list_of_followers) || '[]');
-        if (followers.includes(followerID)) {
+        if (followers && followers.includes(followerID)) {
             // Remove the follower
             followers = followers.filter(id => id !== followerID);
             const updatedFollowers = JSON.stringify(followers);
