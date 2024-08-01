@@ -70,13 +70,13 @@ const likeOrUnlikePost = async (userId, postId, action) => {
             if (!likedByUsers.includes(userId)) {
                 likedByUsers.push(userId);
             } else {
-                return { message: 'Liked' };
+                return { message: 'Liked/Unliked already' };
             }
         } else if (action === 'unlike') {
             if (likedByUsers.includes(userId)) {
                 likedByUsers = likedByUsers.filter(id => id !== userId);
             } else {
-                return { message: 'Unliked' };
+                return { message: 'Liked/Unliked already' };
             }
         } else {
             throw new Error('Invalid action');

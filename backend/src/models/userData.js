@@ -124,8 +124,8 @@ const updateUserDataByUserID = async (userID, name, bio, profilePicBase64Encoded
       // Handle profile picture update
       if (profilePicBase64Encoded) {
           // Upload new image to S3
-          const newProfilePicUrl = await uploadImageToS3Bucket(profilePicBase64Encoded);
-          updateUserData.profile_pic_url = newProfilePicUrl;
+          await uploadImageToS3Bucket(profilePicBase64Encoded);
+          updateUserData.profile_pic_url = profilePicBase64Encoded;
 
           // Delete the old image if it exists
           if (currentProfilePicUrl) {
