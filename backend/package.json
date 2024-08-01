@@ -4,6 +4,7 @@
   "description": "",
   "main": "server.js",
   "scripts": {
+    "migrate-and-start": "knex migrate:latest && node server.js",
     "start": "nodemon ./src/server.js"
   },
   "author": "Vivek Yeggadi",

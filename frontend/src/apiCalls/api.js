@@ -3,7 +3,7 @@ import axios from 'axios';
 //import { logout } from './redux/actions/authActions';
 
 const api = axios.create({
-  baseURL: 'http://localhost:5001',
+  baseURL: process.env.REACT_APP_BASE_URL,
 });
 
 api.interceptors.request.use(

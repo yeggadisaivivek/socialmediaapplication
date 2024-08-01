@@ -10,10 +10,12 @@ COPY package*.json ./
 RUN npm install
 
 # Install nodemon globally
-RUN npm install -g nodemon
+RUN npm install -g nodemon knex
 
 # Copy all files
 COPY . .
+
+RUN knex migrate:latest
 
 # Expose port
 EXPOSE 5000
