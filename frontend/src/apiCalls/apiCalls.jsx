@@ -7,7 +7,8 @@ export const registerUser = async (userData) => {
     const response = await api.post('/auth/signup', userData);
     return response.data;
   } catch (error) {
-    handleApiError(error);
+    console.error(error);
+    throw error;
   }
 };
 
@@ -21,7 +22,8 @@ export const loginUser = async (credentials) => {
     localStorage.setItem('userId', userId);
     return response.data;
   } catch (error) {
-    handleApiError(error);
+    console.error(error);
+    throw error;
   }
 };
 
@@ -31,7 +33,8 @@ export const fetchAllPosts = async (userId) => {
     const response = await api.get(`/users/${userId}/posts/all-posts`);
     return response.data.body;
   } catch (error) {
-    handleApiError(error);
+    console.error(error);
+    throw error;
   }
 };
 
@@ -41,7 +44,8 @@ export const addPost = async (userId, postData) => {
     const response = await api.post(`/users/${userId}/posts`, postData);
     return response.data;
   } catch (error) {
-    handleApiError(error);
+    console.error(error);
+    throw error;
   }
 };
 
@@ -51,7 +55,8 @@ export const deletePost = async (userId, postId) => {
     const response = await api.delete(`/users/${userId}/posts/${postId}`);;
     return response.data;
   } catch (error) {
-    handleApiError(error);
+    console.error(error);
+    throw error;
   }
 };
 
@@ -65,7 +70,8 @@ export const fetchUserDetails = async (userId, followerId) => {
     });
     return response.data.body;
   } catch (error) {
-    handleApiError(error);
+    console.error(error);
+    throw error;
   }
 };
 
@@ -78,7 +84,8 @@ export const updateUserDetails = async (userId, bio, profilePicKey) => {
     });
     return response;
   } catch (error) {
-    handleApiError(error);
+    console.error(error);
+    throw error;
   }
 }
 
@@ -88,7 +95,8 @@ export const likeOrUnlikePost = async (userId, postId, likeUnlike) => {
     const response = await api.post(`/users/${userId}/posts/${postId}/likes`, { action: likeUnlike });
     return response.data?.message;
   } catch (error) {
-    handleApiError(error);
+    console.error(error);
+    throw error;
   }
 }
 
@@ -115,7 +123,8 @@ export const fetchPostsOfUser = async (userId) => {
     const response = await api.get(`/users/${userId}/posts`);
     return response.data.body;
   } catch (error) {
-    handleApiError(error);
+    console.error(error);
+    throw error;
   }
 }
 
@@ -125,7 +134,8 @@ export const addComment = async (userId, postId, comment) => {
     const response = await api.post(`/users/${userId}/posts/${postId}/comments`, comment);
     return response;
   } catch (error) {
-    handleApiError(error);
+    console.error(error);
+    throw error;
   }
 }
 
@@ -140,7 +150,8 @@ export const getPreSignedURL = async ( filename, contentType) => {
     });
     return response.data;
   } catch ( error ) {
-    handleApiError(error);
+    console.error(error);
+    throw error;
   }
 }
 
@@ -150,7 +161,8 @@ export const fetchAllUsers = async () => {
     const response = await api.get('/users');
     return response.data.body
   } catch (error) {
-    handleApiError(error);
+    console.error(error);
+    throw error;
   }
 }
 

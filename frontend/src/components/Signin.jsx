@@ -22,7 +22,7 @@ function Signin() {
             dispatch(authLogin({userId : session?.userId}));
             navigate('/');
         } catch (error) {
-            setError(error.message)
+            setError(error.response.data.message)
         }
     }
 
