@@ -17,6 +17,15 @@ const Navigation = () => {
     navigate('/');
   }
 
+  const handleNavigation = (event, path) => {
+    event.preventDefault();
+    if (location.pathname.includes(path)) {
+      window.location.reload();
+    } else {
+      navigate(path);
+    }
+  };
+
   return (
     <div className="bg-white shadow-md p-4 h-full relative">
       <div className="mb-8">
@@ -30,27 +39,42 @@ const Navigation = () => {
       <nav>
         <ul className="space-y-4">
           <li>
-            <Link to="/" className="block bg-gray-200 rounded-lg px-4 py-2 text-center hover:bg-gray-300 transition duration-300">
+            <Link 
+            to="/" 
+            className="block bg-gray-200 rounded-lg px-4 py-2 text-center hover:bg-gray-300 transition duration-300"
+            onClick={(event) => handleNavigation(event, '/')}>
               Home
             </Link>
           </li>
           <li>
-            <Link to="/addpost" className="block bg-gray-200 rounded-lg px-4 py-2 text-center hover:bg-gray-300 transition duration-300">
+            <Link 
+            to="/addpost" 
+            className="block bg-gray-200 rounded-lg px-4 py-2 text-center hover:bg-gray-300 transition duration-300"
+            onClick={(event) => handleNavigation(event, '/addpost')}>
               Create a Post
             </Link>
           </li>
           <li>
-            <Link to="/search" className="block bg-gray-200 rounded-lg px-4 py-2 text-center hover:bg-gray-300 transition duration-300">
+            <Link 
+            to="/search" 
+            className="block bg-gray-200 rounded-lg px-4 py-2 text-center hover:bg-gray-300 transition duration-300"
+            onClick={(event) => handleNavigation(event, '/search')}>
               Search
             </Link>
           </li>
           <li>
-            <Link to="/profile" className="block bg-gray-200 rounded-lg px-4 py-2 text-center hover:bg-gray-300 transition duration-300">
+            <Link 
+            to="/profile" 
+            className="block bg-gray-200 rounded-lg px-4 py-2 text-center hover:bg-gray-300 transition duration-300"
+            onClick={(event) => handleNavigation(event, '/profile')}>
               Profile
             </Link>
           </li>
           <li>
-            <Link to="/login" onClick={handleSignOut} className="block bg-red-200 rounded-lg px-4 py-2 text-center hover:bg-red-300 transition duration-300">
+            <Link 
+            to="/login" 
+            onClick={handleSignOut} 
+            className="block bg-red-200 rounded-lg px-4 py-2 text-center hover:bg-red-300 transition duration-300">
               Signout
             </Link>
           </li>
