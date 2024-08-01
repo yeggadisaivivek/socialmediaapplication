@@ -2,9 +2,9 @@ const AWS = require('aws-sdk')
 
 // Configure AWS SDK with your credentials and region
 AWS.config.update({
-    accessKeyId: process.env.AWS_ACCESS_KEY,
-    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
-    region: process.env.AWS_REGION
+    accessKeyId: process.env.AWS_ACCESS_KEY_APP,
+    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY_APP,
+    region: process.env.AWS_REGION_APP
 });
 
 const s3 = new AWS.S3();
@@ -15,7 +15,7 @@ const uploadImageToS3Bucket = (base64Image, folder = 'uploads', fileName = `${Da
         const buffer = Buffer.from(base64Image, 'base64');
 
         const params = {
-            Bucket: process.env.AWS_S3_BUCKET,
+            Bucket: process.env.AWS_S3_BUCKET_APP,
             Key: `${folder}/${fileName}`,
             Body: buffer,
             ContentEncoding: 'base64',
@@ -36,7 +36,7 @@ const uploadImageToS3Bucket = (base64Image, folder = 'uploads', fileName = `${Da
 const getImageFromS3Bucket = (key) => {
     return new Promise((resolve, reject) => {
         const params = {
-            Bucket: process.env.AWS_S3_BUCKET,
+            Bucket: process.env.AWS_S3_BUCKET_APP,
             Key: key,
         };
 
@@ -52,7 +52,7 @@ const getImageFromS3Bucket = (key) => {
 const deleteImageFromS3Bucket = (key) => {
     return new Promise((resolve, reject) => {
         const params = {
-            Bucket: process.env.AWS_S3_BUCKET,
+            Bucket: process.env.AWS_S3_BUCKET_APP,
             Key: key
         };
 
@@ -67,7 +67,7 @@ const deleteImageFromS3Bucket = (key) => {
 
 const getSignedURLFromS3Bucket = (key) => {
     const params = {
-      Bucket: process.env.AWS_S3_BUCKET, 
+      Bucket: process.env.AWS_S3_BUCKET_APP, 
       Key: key,
       Expires: 60 * 5,
     };
