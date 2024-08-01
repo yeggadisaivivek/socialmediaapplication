@@ -79,14 +79,16 @@ const PostsFeed = ({ postFromParent, flag }) => {
 
   const handleAddComment = useCallback(async (postId, comment) => {
     try {
-      await addComment(userId, postId, comment);
-      setPosts((prevPosts) =>
-        prevPosts.map((post) =>
-          post.id === postId
-            ? { ...post, comments_count: post.comments_count + 1, comments: [...(post.comments || []), comment] }
-            : post
-        )
-      );
+      if (comment.comment !== "") {
+        await addComment(userId, postId, comment);
+        setPosts((prevPosts) =>
+          prevPosts.map((post) =>
+            post.id === postId
+              ? { ...post, comments_count: post.comments_count + 1, comments: [...(post.comments || []), comment] }
+              : post
+          )
+        );
+      }
     } catch (error) {
       toast.error("Error while adding a comment");
     }
@@ -149,9 +151,11 @@ const PostsFeed = ({ postFromParent, flag }) => {
                       <h2 className="text-sm font-bold">{post.name}</h2>
                     </div>
                   </div>
-                  <button onClick={() => toggleMenu(post.id)} className="focus:outline-none">
-                    <FaEllipsisH />
-                  </button>
+                  {userId === post.user_id ? (
+                    <button onClick={() => toggleMenu(post.id)} className="focus:outline-none">
+                      <FaEllipsisH />
+                    </button>
+                  ) : (<></>)}
                   {menuOpen[post.id] && (
                     <div className="absolute top-12 right-4 bg-white shadow-md rounded p-2">
                       <button
