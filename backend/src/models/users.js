@@ -1,32 +1,29 @@
 const db = require('../db');
 
-const getAllUsersWithNames = () => {
+const getAllUsersWithNames = async () => {
+    const sql = `
+        SELECT u.id, u.username, ud.name
+        FROM users u
+        LEFT JOIN user_data ud ON u.id = ud.user_id
+    `;
+
     try {
-        return new Promise((resolve, reject) => {
-            const sql = `
-                SELECT u.id, u.username, ud.name
-                FROM users u
-                LEFT JOIN user_data ud ON u.id = ud.user_id
-            `;
+        // Execute query and get results
+        const [results] = await db.query(sql);
 
-            db.query(sql, (err, results) => {
-                if (err) {
-                    return reject({ error: err.message });
-                }
+        // Map results to desired structure
+        const usersWithNames = results.map(user => ({
+            id: user.id,
+            username: user.username,
+            name: user.name
+        }));
 
-                const usersWithNames = results.map(user => ({
-                    id: user.id,
-                    username: user.username,
-                    name: user.name
-                }));
-
-                resolve(usersWithNames);
-            });
-        });
+        return usersWithNames;
     } catch (error) {
         return { error: error.message };
     }
 };
+
 
 
 module.exports = { getAllUsersWithNames }

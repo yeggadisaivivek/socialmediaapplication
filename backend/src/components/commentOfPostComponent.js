@@ -59,14 +59,7 @@ const addCommentToPost = async (postId, userId, comment) => {
 
     try {
         // Retrieve current comments from the comments_of_post table
-        const commentsResult = await new Promise((resolve, reject) => {
-            db.query(sqlSelect, [postId], (err, results) => {
-                if (err) {
-                    return reject(err);
-                }
-                resolve(results);
-            });
-        });
+        const [commentsResult] = await db.query(sqlSelect, [postId]);
 
         let comments = [];
         if (commentsResult.length > 0) {
@@ -81,23 +74,9 @@ const addCommentToPost = async (postId, userId, comment) => {
 
         // Insert or update the comments
         if (commentsResult.length === 0) {
-            await new Promise((resolve, reject) => {
-                db.query(sqlInsert, [postId, updatedComments], (err, results) => {
-                    if (err) {
-                        return reject(err);
-                    }
-                    resolve(results);
-                });
-            });
+            await db.query(sqlInsert, [postId, updatedComments]);
         } else {
-            await new Promise((resolve, reject) => {
-                db.query(sqlUpdate, [updatedComments, postId], (err, results) => {
-                    if (err) {
-                        return reject(err);
-                    }
-                    resolve(results);
-                });
-            });
+            await db.query(sqlUpdate, [updatedComments, postId]);
         }
 
         return { comment: newComment };
@@ -106,5 +85,6 @@ const addCommentToPost = async (postId, userId, comment) => {
         return { error: error.message };
     }
 };
+
 
 module.exports = { getCommentsByPostId, addCommentToPost };

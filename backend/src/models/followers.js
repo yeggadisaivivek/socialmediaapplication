@@ -1,72 +1,67 @@
 const db = require('../db');
 
-const updateFollowers = (userID, followerID) => {
-    const sqlSelect = `SELECT * FROM followers WHERE user_id = ?`;
+const updateFollowers = async (userID, followerID) => {
+    const sqlSelect = `SELECT list_of_followers FROM followers WHERE user_id = ?`;
     const sqlInsert = `INSERT INTO followers (user_id, list_of_followers) VALUES (?, ?)`;
     const sqlUpdate = `UPDATE followers SET list_of_followers = ? WHERE user_id = ?`;
 
-    return new Promise((resolve, reject) => {
-        db.query(sqlSelect, [userID], (selectErr, results) => {
-            if (selectErr) {
-                return reject({ error: selectErr.message });
-            }
+    try {
+        // Fetch current list of followers
+        const [results] = await db.query(sqlSelect, [userID]);
 
-            if (results.length === 0) {
-                // No followers record exists, create a new one
-                const newFollowers = JSON.stringify([followerID]);
-                db.query(sqlInsert, [userID, newFollowers], (insertErr, insertResults) => {
-                    if (insertErr) {
-                        return reject({ error: insertErr.message });
-                    }
-                    resolve({ message: 'Followers record created successfully', results: insertResults });
-                });
+        if (results.length === 0) {
+            // No followers record exists, create a new one
+            const newFollowers = JSON.stringify([followerID]);
+            await db.query(sqlInsert, [userID, newFollowers]);
+            return { message: 'Followers record created successfully' };
+        } else {
+            // Followers record exists, update it
+            let followers = JSON.parse(results[0].list_of_followers || '[]');
+            if (!followers.includes(followerID)) {
+                followers.push(followerID);
+                const updatedFollowers = JSON.stringify(followers);
+                await db.query(sqlUpdate, [updatedFollowers, userID]);
+                return { message: 'Followers updated successfully' };
             } else {
-                // Followers record exists, update it
-                let followers = results[0].list_of_followers || [];
-                if (!followers.includes(followerID)) {
-                    followers.push(followerID);
-                    const updatedFollowers = JSON.stringify(followers);
-                    db.query(sqlUpdate, [updatedFollowers, userID], (updateErr, updateResults) => {
-                        if (updateErr) {
-                            return reject({ error: updateErr.message });
-                        }
-                        resolve({ message: 'Followers updated successfully', results: updateResults });
-                    });
-                } else {
-                    resolve({ message: 'Follower already exists', results });
-                }
+                return { message: 'Follower already exists' };
             }
-        });
-    });
+        }
+    } catch (error) {
+        return { error: error.message };
+    }
 };
 
-const unfollowFollower = (userID, followerID) => {
-    const sqlSelect = `SELECT * FROM followers WHERE user_id = ?`;
+
+const unfollowFollower = async (userID, followerID) => {
+    const sqlSelect = `SELECT list_of_followers FROM followers WHERE user_id = ?`;
     const sqlUpdate = `UPDATE followers SET list_of_followers = ? WHERE user_id = ?`;
 
-    return new Promise((resolve, reject) => {
-        db.query(sqlSelect, [userID], (selectErr, results) => {
-            if (selectErr) {
-                return reject({ error: selectErr.message });
-            }
+    try {
+        // Fetch current list of followers
+        const [results] = await db.query(sqlSelect, [userID]);
+        if (results.length === 0) {
+            throw new Error('User not found');
+        }
 
-            // Followers record exists, update it
-            let followers = JSON.parse(JSON.stringify(results[0].list_of_followers) || '[]');
-            if (followers.includes(followerID)) {
-                followers = followers.filter(id => id !== followerID);
-                const updatedFollowers = JSON.stringify(followers);
-                db.query(sqlUpdate, [updatedFollowers, userID], (updateErr, updateResults) => {
-                    if (updateErr) {
-                        return reject({ error: updateErr.message });
-                    }
-                    resolve({ message: 'Followers updated successfully', results: updateResults });
-                });
-            } else {
-                resolve({ message: 'Follower already unfollowed', results });
-            }
-        });
-    });
-}
+        let followers = JSON.parse(JSON.stringify(results[0].list_of_followers) || '[]');
+        if (followers.includes(followerID)) {
+            // Remove the follower
+            followers = followers.filter(id => id !== followerID);
+            const updatedFollowers = JSON.stringify(followers);
+
+            // Update the list of followers
+            await db.query(sqlUpdate, [updatedFollowers, userID]);
+
+            return { message: 'Follower unfollowed successfully' };
+        } else {
+            return { message: 'Follower already unfollowed' };
+        }
+
+    } catch (error) {
+        return { error: error.message };
+    }
+};
+
 
 const getFollowersForUser = async (userID) => {
     const sqlSelectFollowers = `SELECT list_of_followers FROM followers WHERE user_id = ?`;

@@ -1,4 +1,4 @@
-const db = require('../db.js');
+const pool = require('../db.js');
 const { uploadImageToS3Bucket, getSignedURLFromS3Bucket, deleteImageFromS3Bucket } = require('../utils/awsUtil');
 const { getUsernameByUserId } = require('./userData.js');
 
@@ -22,11 +22,11 @@ const getPost = async (postID) => {
 }
 
 const createPost = async (userID, caption, mediaType, profilePicUrl) => {
-    const connection = db;
-    //connection.release();
-    try {
-        //await connection.beginTransaction();
+    const sqlInsertPost = 'INSERT INTO posts SET ?';
+    const sqlInsertLikesOfPost = 'INSERT INTO likes_of_post SET ?';
+    const sqlInsertCommentsOfPost = 'INSERT INTO comments_of_post SET ?';
 
+    try {
         // Insert new post
         const newPost = {
             user_id: userID,
@@ -36,16 +36,7 @@ const createPost = async (userID, caption, mediaType, profilePicUrl) => {
             likes_count: 0,
             comments_count: 0
         };
-        const sqlInsertPost = `INSERT INTO posts SET ?`;
-        const postResult = await new Promise((resolve, reject) => {
-            connection.query(sqlInsertPost, newPost, (err, results) => {
-                if (err) {
-                    console.log("error in postresult", err)
-                    return reject(err);
-                }
-                resolve(results);
-            });
-        });
+        const [postResult] = await pool.query(sqlInsertPost, newPost);
 
         const postId = postResult.insertId;
 
@@ -54,41 +45,18 @@ const createPost = async (userID, caption, mediaType, profilePicUrl) => {
             post_id: postId,
             liked_by_users: JSON.stringify([])
         };
-        const sqlInsertLikesOfPost = `INSERT INTO likes_of_post SET ?`;
-        await new Promise((resolve, reject) => {
-            connection.query(sqlInsertLikesOfPost, newLikesOfPost, (err, results) => {
-                if (err) {
-                    console.log("error in likes_of_post", err)
-                    return reject(err);
-                }
-                resolve(results);
-            });
-        });
+        await pool.query(sqlInsertLikesOfPost, newLikesOfPost);
 
         // Insert into comments_of_post
         const newCommentsOfPost = {
             post_id: postId,
             comments: JSON.stringify([])
         };
-        const sqlInsertCommentsOfPost = `INSERT INTO comments_of_post SET ?`;
-        await new Promise((resolve, reject) => {
-            connection.query(sqlInsertCommentsOfPost, newCommentsOfPost, (err, results) => {
-                if (err) {
-                    console.log("error in comments_of_post", err)
-                    return reject(err);
-                }
-                resolve(results);
-            });
-        });
+        await pool.query(sqlInsertCommentsOfPost, newCommentsOfPost);
 
-       // await connection.commit();
-        //connection.release();
-
-        return { message: "Inserted Successfully" };
+        return { message: 'Inserted Successfully' };
     } catch (error) {
-        //await connection.rollback();
-        //connection.release();
-        return { error: "Error: " + error.message };
+        return { error: 'Error: ' + error.message };
     }
 };
 
@@ -142,52 +110,31 @@ const updatePost = async (postID, caption, profilePicBase64Encoded) => {
 } 
 
 const deletePost = async (postID) => {
-    const selectSqlPosts = `SELECT post_url FROM posts WHERE id = ?`
-    const delteSqlPosts = `DELETE FROM posts WHERE id = ?`;
-    const deleteSqlLikes = `DELETE FROM likes_of_post where post_id = ?`;
-    const deleteSqlComment = `DELETE FROM comments_of_post where post_id = ?`
+    const selectSqlPosts = 'SELECT post_url FROM posts WHERE id = ?';
+    const deleteSqlPosts = 'DELETE FROM posts WHERE id = ?';
+    const deleteSqlLikes = 'DELETE FROM likes_of_post WHERE post_id = ?';
+    const deleteSqlComments = 'DELETE FROM comments_of_post WHERE post_id = ?';
+
     try {
-        await new Promise((resolve, reject) => {
-            db.query(selectSqlPosts, [postID], async (err, results) => {
-                if (err) {
-                    return reject({ error: err.message });
-                }
-                if (results.length === 0) {
-                    return reject({ error: "Post not found" });
-                }
-                await deleteImageFromS3Bucket(results[0].post_url);
-                resolve();
-            });
-        });
+        // Select the post URL for deletion from S3
+        const [postResults] = await pool.query(selectSqlPosts, [postID]);
+        if (postResults.length === 0) {
+            throw new Error('Post not found');
+        }
 
-        await new Promise((resolve, reject) => {
-            db.query(deleteSqlLikes, [postID], (err, results) => {
-                if (err) {
-                    return reject({ error: err.message });
-                }
-                resolve(results);
-            });
-        });
+        // Delete the image from S3
+        await deleteImageFromS3Bucket(postResults[0].post_url);
 
-        await new Promise((resolve, reject) => {
-            db.query(deleteSqlComment, [postID], (err, results) => {
-                if (err) {
-                    return reject({ error: err.message });
-                }
-                resolve(results);
-            });
-        });
+        // Delete from likes_of_post table
+        await pool.query(deleteSqlLikes, [postID]);
 
-        const x = await new Promise((resolve, reject) => {
-            db.query(delteSqlPosts, [postID], (err, results) => {
-                if (err) {
-                    return reject({ error: err.message });
-                }
-                resolve(results);
-            });
-        });
+        // Delete from comments_of_post table
+        await pool.query(deleteSqlComments, [postID]);
 
-        return { message: "Deleted the Post Successfully" }
+        // Delete from posts table
+        await pool.query(deleteSqlPosts, [postID]);
+
+        return { message: 'Deleted the Post Successfully' };
     } catch (error) {
         return { error: error.message };
     }
@@ -214,51 +161,34 @@ const getAllPostsOfUser = async (userID) => {
             (SELECT post_id, JSON_LENGTH(comments) AS comments_count, comments
              FROM comments_of_post) c ON p.id = c.post_id
         WHERE 
-            p.user_id IN (?)
+            p.user_id = ?
         ORDER BY 
             p.created_at DESC
     `;
     
-    const sqlSelectUsers = `SELECT user_id, name FROM user_data WHERE user_id IN (?)`;
+    const sqlSelectUsers = 'SELECT user_id, name FROM user_data WHERE user_id IN (?)';
 
     try {
-        const followerIDs = [];
-        followerIDs.push(userID);
-
-        // Select posts with user details, likes, and comments
-        const postResults = await new Promise((resolve, reject) => {
-            db.query(sqlSelectPosts, [followerIDs], (err, results) => {
-                if (err) {
-                    return reject({ error: err.message });
-                }
-                resolve(results);
-            });
-        });
+        // Fetch posts by user
+        const [postResults] = await pool.query(sqlSelectPosts, [userID]);
 
         // Extract user IDs from comments for querying
         const commentUserIds = postResults.flatMap(post => 
             JSON.parse(post.comments || '[]').map(comment => comment.user_id)
         );
-        
+
         // Fetch user names for comments
         const uniqueUserIds = [...new Set(commentUserIds)];
-        let userMap = [];
-        if(uniqueUserIds && uniqueUserIds.length > 0) {
-        const userResults = await new Promise((resolve, reject) => {
-            db.query(sqlSelectUsers, [uniqueUserIds], (err, results) => {
-                if (err) {
-                    return reject({ error: err.message });
-                }
-                resolve(results);
-            });
-        });
+        let userMap = {};
+        if (uniqueUserIds.length > 0) {
+            const [userResults] = await pool.query(sqlSelectUsers, [uniqueUserIds]);
 
-        // Create a map for quick user lookup
-        userMap = userResults.reduce((acc, user) => {
-            acc[user.user_id] = user.name;
-            return acc;
-        }, {});
-    }
+            // Create a map for quick user lookup
+            userMap = userResults.reduce((acc, user) => {
+                acc[user.user_id] = user.name;
+                return acc;
+            }, {});
+        }
 
         // Process posts to attach signed URLs and user names to comments
         const postsWithDetails = await Promise.all(postResults.map(async post => {
@@ -286,8 +216,9 @@ const getAllPostsOfUser = async (userID) => {
     }
 };
 
+
 const allPosts = async (userID) => {
-    const sqlSelectFollowers = `SELECT list_of_followers FROM followers WHERE user_id = ?`;
+    const sqlSelectFollowers = 'SELECT list_of_followers FROM followers WHERE user_id = ?';
     const sqlSelectPosts = `
         SELECT 
             p.*, 
@@ -313,57 +244,39 @@ const allPosts = async (userID) => {
             p.created_at DESC
     `;
     
-    const sqlSelectUsers = `SELECT user_id, name FROM user_data WHERE user_id IN (?)`;
+    const sqlSelectUsers = 'SELECT user_id, name FROM user_data WHERE user_id IN (?)';
 
     try {
         // Select the list of followers
-        const followerResults = await new Promise((resolve, reject) => {
-            db.query(sqlSelectFollowers, [userID], (err, results) => {
-                if (err) {
-                    return reject({ error: err.message });
-                }
-                resolve(results);
-            });
-        });
+        const [followerResults] = await pool.query(sqlSelectFollowers, [userID]);
 
         // Parse the list of followers and include the user ID
-        const followerIDs = followerResults[0].list_of_followers || [] ;
-        if(typeof followerIDs === 'number'){
-            
+        let followerIDs = followerResults[0].list_of_followers || [];
+        if (typeof followerIDs === 'string') {
+            followerIDs = JSON.parse(followerIDs);
         }
         followerIDs.push(userID);
+
         // Select posts with user details, likes, and comments
-        const postResults = await new Promise((resolve, reject) => {
-            db.query(sqlSelectPosts, [followerIDs], (err, results) => {
-                if (err) {
-                    return reject({ error: err.message });
-                }
-                resolve(results);
-            });
-        });
+        const [postResults] = await pool.query(sqlSelectPosts, [followerIDs]);
+
         // Extract user IDs from comments for querying
         const commentUserIds = postResults.flatMap(post => 
             JSON.parse(post.comments || '[]').map(comment => comment.user_id)
-        ) ;
-        
+        );
+
         // Fetch user names for comments
         const uniqueUserIds = [...new Set(commentUserIds)];
-        let userMap = [];
-        if(uniqueUserIds && uniqueUserIds.length > 0) {
-        const userResults = await new Promise((resolve, reject) => {
-            db.query(sqlSelectUsers, [uniqueUserIds], (err, results) => {
-                if (err) {
-                    return reject({ error: err.message });
-                }
-                resolve(results);
-            });
-        });
-        // Create a map for quick user lookup
-        userMap = userResults.reduce((acc, user) => {
-            acc[user.user_id] = user.name;
-            return acc;
-        }, {});
-    }
+        let userMap = {};
+        if (uniqueUserIds.length > 0) {
+            const [userResults] = await pool.query(sqlSelectUsers, [uniqueUserIds]);
+
+            // Create a map for quick user lookup
+            userMap = userResults.reduce((acc, user) => {
+                acc[user.user_id] = user.name;
+                return acc;
+            }, {});
+        }
 
         // Process posts to attach signed URLs and user names to comments
         const postsWithDetails = await Promise.all(postResults.map(async post => {
@@ -390,5 +303,6 @@ const allPosts = async (userID) => {
         return { error: error.message };
     }
 };
+
 
 module.exports = { getPost, createPost, updatePost, deletePost, allPosts, getAllPostsOfUser };
