@@ -87,17 +87,7 @@ Make sure to create a `.env` file in the root directory of the backend and front
 ### Backend
 
 ```
-AWS_ACCESS_KEY_APP="AKIAW3MEBTDRJHV3VCPR"
-AWS_SECRET_ACCESS_KEY_APP="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"
-AWS_S3_BUCKET_APP="advwebapplicationproject"
-AWS_REGION_APP="us-east-1"
-
-DATABASE_HOST="db"
-DATABASE_USER="root"
-DATABASE_PASSWORD="password"
-DATABASE_NAME="mydatabase"
-
-JWT_SECRET="secretkey"
+Uploaded Seperately
 ```
 
 ### Frontend
