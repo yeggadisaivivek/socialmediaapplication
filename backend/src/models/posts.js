@@ -218,7 +218,10 @@ const getAllPostsOfUser = async (userID) => {
 
 
 const allPosts = async (userID) => {
-    const sqlSelectFollowers = 'SELECT list_of_followers FROM followers WHERE user_id = ?';
+    const sqlSelectFollowers = `
+    SELECT user_id 
+    FROM followers 
+    WHERE JSON_CONTAINS(list_of_followers, JSON_ARRAY(?), '$')`;
     const sqlSelectPosts = `
         SELECT 
             p.*, 
@@ -251,10 +254,7 @@ const allPosts = async (userID) => {
         const [followerResults] = await pool.query(sqlSelectFollowers, [userID]);
 
         // Parse the list of followers and include the user ID
-        let followerIDs = followerResults[0]?.list_of_followers || [];
-        if (typeof followerIDs === 'string') {
-            followerIDs = JSON.parse(followerIDs);
-        }
+        let followerIDs = followerResults.map(result => result.user_id);
         followerIDs.push(userID);
 
         // Select posts with user details, likes, and comments
