@@ -58,7 +58,7 @@ const createFollowerRequest = async (userID, followerID) => {
     const sqlInsertRequest = `INSERT INTO follower_requests (user_id, request_id_from) VALUES (?, ?)`;
 
     try {
-        await db.query(sqlInsertRequest, [userID, followerID]);
+        await db.query(sqlInsertRequest, [followerID, userID]);
         return { message: 'Follower request stored successfully' };
     } catch (error) {
         return { error: error.message };
