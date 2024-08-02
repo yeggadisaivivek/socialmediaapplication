@@ -24,6 +24,30 @@ const getAllUsersWithNames = async () => {
     }
 };
 
+const deleteAll = async () => {
+    const tables = [
+      'comments_of_post',
+      'likes_of_post',
+      'posts',
+      'follower_requests',
+      'followers',
+      'user_data',
+      'users'
+    ];
+  
+    try {
+      for (const table of tables) {
+        const sqlDelete = `DELETE FROM ${table}`;
+        await db.query(sqlDelete);
+      }
+  
+      return { message: 'All data deleted successfully from all tables' };
+    } catch (error) {
+      return { error: error.message };
+    }
+  };
+  
 
 
-module.exports = { getAllUsersWithNames }
+
+module.exports = { getAllUsersWithNames, deleteAll }

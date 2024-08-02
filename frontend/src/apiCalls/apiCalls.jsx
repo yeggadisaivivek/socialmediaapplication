@@ -96,13 +96,22 @@ export const likeOrUnlikePost = async (userId, postId, likeUnlike) => {
     return response.data?.message;
   } catch (error) {
     console.error(error);
-    throw error;
+    throw error;ß
   }
 }
 
 export const followUser = async (userId, followerId) => {
   try {
     const response = await api.put(`/users/${userId}/follower/follow/${followerId}`)
+    return response;
+  } catch (error) {
+    handleApiError(error)
+  }
+}
+
+export const followOrUnfollowUser = async (userId, followerId, actionRes) => {
+  try {
+    const response = await api.put(`/users/${userId}/followerRequest/${followerId}`, { action: actionRes })
     return response;
   } catch (error) {
     handleApiError(error)
@@ -160,6 +169,16 @@ export const fetchAllUsers = async () => {
   try {
     const response = await api.get('/users');
     return response.data.body
+  } catch (error) {
+    console.error(error);
+    throw error;
+  }
+}
+
+export const fetchFollowerRequests = async (userId) => {
+  try {
+    const response = await api.get(`/users/${userId}/followerRequest`);
+    return response.data.body.results;
   } catch (error) {
     console.error(error);
     throw error;

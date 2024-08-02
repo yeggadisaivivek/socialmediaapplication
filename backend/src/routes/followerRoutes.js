@@ -1,5 +1,6 @@
 const express = require('express');
 const { unfollowFollower, getFollowersForUser, updateFollowers } = require('../models/followers');
+const { createFollowerRequest } = require('../models/followerRequests');
 const router = express.Router();
 
 router.put('/unfollow/:followerId', async (req,res) => {
@@ -21,11 +22,12 @@ router.put('/follow/:followerId', async (req,res) => {
     const userID = res.locals.userId;
     const followerID = req.params.followerId;
     try {
-        const response = await updateFollowers(userID, followerID);
+        const response = await createFollowerRequest(userID, followerID);
+        // const response = await updateFollowers(userID, followerID);
         if (response.error) {
             res.status(500).json({ message: 'Server error', error: response.error });
         } else {
-            res.status(200).json({ message: 'followed Successfully' });
+            res.status(200).json({ message: 'Requested Successfully' });
         }
     } catch (error) {
         res.status(500).json({ message: 'Server error' });

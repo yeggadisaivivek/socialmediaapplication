@@ -19,7 +19,7 @@ const Navigation = () => {
 
   const handleNavigation = (event, path) => {
     event.preventDefault();
-    if (location.pathname.includes(path)) {
+    if (path !== "/" && location.pathname.includes(path)) {
       window.location.reload();
     } else {
       navigate(path);
@@ -75,7 +75,7 @@ const Navigation = () => {
             to="/follower-requests" 
             className="block bg-gray-200 rounded-lg px-4 py-2 text-center hover:bg-gray-300 transition duration-300"
             onClick={(event) => handleNavigation(event, '/follower-requests')}>
-              Follower Requests
+              Follow Requests
             </Link>
           </li>
           <li>

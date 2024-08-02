@@ -23,60 +23,68 @@ const getUsernameByUserId = async (userID) => {
 }
 
 const getUserDataByUserID = async (userID, followerId) => {
-  const userDataQuery = `SELECT * FROM ${UserDataTableName} WHERE user_id = ?`;
-  const postCountQuery = `SELECT COUNT(*) AS number_of_posts FROM posts WHERE user_id = ?`;
-  const followerCountQuery = `SELECT SUM(JSON_LENGTH(list_of_followers)) AS number_of_followers FROM followers WHERE user_id = ?`;
-  const followerCountQueryWithFollowingStatus = `SELECT JSON_CONTAINS(list_of_followers, JSON_ARRAY(?)) AS isFollower FROM followers WHERE user_id = ?`;
-
-  try {
-      // Execute all queries in parallel
-      const [userResults, postCountResults, followerCountResults] = await Promise.all([
-          // Fetch user data and process the profile picture URL
-          (async () => {
-              const [results] = await pool.query(userDataQuery, [userID]);
-              if (results.length > 0 && results[0].profile_pic_url) {
-                  results[0].profile_pic_url = await getSignedURLFromS3Bucket(results[0].profile_pic_url);
-              }
-              return results[0] || {}; // Return an empty object if no results
-          })(),
-
-          // Fetch post count
-          (async () => {
-              const [results] = await pool.query(postCountQuery, [userID]);
-              return results[0]?.number_of_posts || 0;
-          })(),
-
-          // Fetch follower count and follower status
-          (async () => {
-              const [followerResults] = await pool.query(followerCountQuery, [userID]);
-              if (followerId) {
-                  const [followerStatusResults] = await pool.query(followerCountQueryWithFollowingStatus, [followerId, userID]);
-                  return {
-                      number_of_followers: followerResults[0]?.number_of_followers || 0,
-                      isFollower: followerStatusResults[0]?.isFollower || 0
-                  };
-              }
-              return {
-                  number_of_followers: followerResults[0]?.number_of_followers || 0,
-                  isFollower: 0
-              };
-          })()
-      ]);
-
-      // Merge the results
-      const mergedResults = {
-          ...userResults,
-          followingStatus: followerCountResults.isFollower,
-          number_of_posts: postCountResults,
-          number_of_followers: Number(followerCountResults.number_of_followers)
-      };
-
-      return mergedResults;
-
-  } catch (error) {
-      return { error: error.message };
-  }
-};
+    const userDataQuery = `SELECT * FROM ${UserDataTableName} WHERE user_id = ?`;
+    const postCountQuery = `SELECT COUNT(*) AS number_of_posts FROM posts WHERE user_id = ?`;
+    const followerCountQuery = `SELECT SUM(JSON_LENGTH(list_of_followers)) AS number_of_followers FROM followers WHERE user_id = ?`;
+    const followerStatusQuery = `SELECT JSON_CONTAINS(list_of_followers, JSON_ARRAY(?)) AS isFollower FROM followers WHERE user_id = ?`;
+    const followerRequestQuery = `SELECT COUNT(*) AS isRequested FROM follower_requests WHERE user_id = ? AND request_id_from = ?`;
+  
+    try {
+        // Execute all queries in parallel
+        const [userResults, postCountResults, followerCountResults, followingStatus] = await Promise.all([
+            // Fetch user data and process the profile picture URL
+            (async () => {
+                const [results] = await pool.query(userDataQuery, [userID]);
+                if (results.length > 0 && results[0].profile_pic_url) {
+                    results[0].profile_pic_url = await getSignedURLFromS3Bucket(results[0].profile_pic_url);
+                }
+                return results[0] || {}; // Return an empty object if no results
+            })(),
+  
+            // Fetch post count
+            (async () => {
+                const [results] = await pool.query(postCountQuery, [userID]);
+                return results[0]?.number_of_posts || 0;
+            })(),
+  
+            // Fetch follower count
+            (async () => {
+                const [results] = await pool.query(followerCountQuery, [userID]);
+                return results[0]?.number_of_followers || 0;
+            })(),
+  
+            // Fetch following status
+            (async () => {
+                if (followerId) {
+                    const [[followerStatusResults], [followerRequestResults]] = await Promise.all([
+                        pool.query(followerStatusQuery, [userID, followerId]),
+                        pool.query(followerRequestQuery, [followerId, userID])
+                    ]);
+                    if (followerStatusResults[0]?.isFollower) {
+                        return 'follower';
+                    } else if (followerRequestResults[0]?.isRequested) {
+                        return 'requested';
+                    }
+                }
+                return 'not a follower';
+            })()
+        ]);
+  
+        // Merge the results
+        const mergedResults = {
+            ...userResults,
+            followingStatus,
+            number_of_posts: postCountResults,
+            number_of_followers: Number(followerCountResults)
+        };
+  
+        return mergedResults;
+  
+    } catch (error) {
+        return { error: error.message };
+    }
+  };
+  
 
   
 

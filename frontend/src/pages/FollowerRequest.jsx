@@ -1,58 +1,56 @@
 import React, { useEffect, useState } from 'react';
-import axios from 'axios';
 import Layout from '../components/Layout';
-
-const initialRequests = [
-    {
-        id: 1,
-        username: "A"
-    },
-    {
-        id: 2,
-        username: "B"
-    },
-    {
-        id: 3,
-        username: "C"
-    },
-    {
-        id: 4,
-        username: "D"
-    },
-    {
-        id: 5,
-        username: "E"
-    },
-];
+import { fetchFollowerRequests, followOrUnfollowUser } from '../apiCalls/apiCalls';
+import { useDispatch, useSelector } from 'react-redux';
+import { toast } from 'react-toastify'; // Make sure to import the action correctly
+import { increaseFollowingCount } from '../redux/profileSlice';
+import LoadingSpinner from '../components/LoadingSpinner';
 
 const FollowerRequests = () => {
-  const [requests, setRequests] = useState(initialRequests);
+  const dispatch = useDispatch();
+  const [requests, setRequests] = useState([]);
+  const userId = useSelector((state) => state.auth.userId);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-//   useEffect(() => {
-//     const fetchRequests = async () => {
-//       try {
-//         const response = await axios.get('/api/requests'); // Replace with your API endpoint
-//         setRequests(response.data);
-//       } catch (err) {
-//         setError(err.message);
-//       } finally {
-//         setLoading(false);
-//       }
-//     };
-
-//     fetchRequests();
-//   }, []);
-
-  const handleAccept = (requestId) => {
-    // Implement accept request logic here
-    console.log(`Accepted request with ID: ${requestId}`);
+  const fetchRequests = async () => {
+    try {
+      setLoading(true)
+      const response = await fetchFollowerRequests(userId); // Replace with your API endpoint
+      setRequests(response);
+      setLoading(false)
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleReject = (requestId) => {
-    // Implement reject request logic here
-    console.log(`Rejected request with ID: ${requestId}`);
+  useEffect(() => {
+    fetchRequests();
+  }, [userId]); // Only run when userId changes
+
+  const handleAccept = async (requestId) => {
+    try {
+      setLoading(true)
+      await followOrUnfollowUser(userId, requestId, 'accept');
+      dispatch(increaseFollowingCount());
+      fetchRequests();
+      setLoading(false)
+    } catch (error) {
+      toast.error('Error while accepting the request');
+    }
+  };
+
+  const handleReject = async (requestId) => {
+    try {
+      setLoading(true)
+      await followOrUnfollowUser(userId, requestId, 'reject');
+      fetchRequests();
+      setLoading(false)
+    } catch (error) {
+      toast.error('Error while rejecting the request');
+    }
   };
 
   if (loading) {
@@ -65,32 +63,39 @@ const FollowerRequests = () => {
 
   return (
     <Layout>
-      <div className="flex  justify-center min-h-screen">
-        <div className="container mx-auto p-4">
-          <h1 className="text-xl font-bold mb-4 text-center">User Requests</h1>
-          <div className="space-y-4 max-w-md mx-auto">
-            {requests.map(request => (
-              <div key={request.id} className="p-4 bg-white shadow-md rounded flex items-center justify-between">
-                <span className="font-medium">{request.username}</span>
-                <div className="space-x-2">
-                  <button
-                    onClick={() => handleAccept(request.id)}
-                    className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 transition duration-300"
-                  >
-                    Accept
-                  </button>
-                  <button
-                    onClick={() => handleReject(request.id)}
-                    className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 transition duration-300"
-                  >
-                    Reject
-                  </button>
-                </div>
+      {loading ? <LoadingSpinner /> : (
+        <div className="flex justify-center min-h-screen">
+          <div className="container mx-auto p-4">
+            <h1 className="text-xl font-bold mb-4 text-center">User Requests</h1>
+            {requests.length === 0 ? (
+              <div className="text-center text-gray-500">No requests at the moment</div>
+            ) : (
+              <div className="space-y-4 max-w-md mx-auto">
+                {requests.map((request) => (
+                  <div key={request.request_id_from} className="p-4 bg-white shadow-md rounded flex items-center justify-between">
+                    <span className="font-medium">{request.name}</span>
+                    <div className="space-x-2">
+                      <button
+                        onClick={() => handleAccept(request.request_id_from)}
+                        className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 transition duration-300"
+                      >
+                        Accept
+                      </button>
+                      <button
+                        onClick={() => handleReject(request.request_id_from)}
+                        className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 transition duration-300"
+                      >
+                        Reject
+                      </button>
+                    </div>
+                  </div>
+                ))}
               </div>
-            ))}
+            )}
           </div>
         </div>
-      </div>
+      )}
+
     </Layout>
   );
 };

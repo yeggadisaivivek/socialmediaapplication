@@ -6,7 +6,7 @@ import PostsFeed from './PostsFeed'; // Adjust the import path as necessary
 import Layout from '../components/Layout';
 import defaultProfilePic from '../metadata/pictures/default_profile_pic.jpg'
 import {  fetchUserDetails, fetchPostsOfUser, followUser, unfollowUser } from '../apiCalls/apiCalls'; // Adjust the import path as necessary
-import { decreaseFollowingCount, increaseFollowingCount, updateProfile } from '../redux/profileSlice';
+import { decreaseFollowingCount } from '../redux/profileSlice';
 
 const Profile = () => {
   const currentUserId = useSelector((state) => state.auth.userId);
@@ -15,7 +15,7 @@ const Profile = () => {
   
   const [user, setUser] = useState(null);
   const [posts, setPosts] = useState([]);
-  const [followingStatus, setFollowingStatus] = useState(null); // follow/unfollow/requested
+  const [followingStatus, setFollowingStatus] = useState('follower'); // follow/unfollow/requested
 
   useEffect(() => {
     const fetchProfileData = async () => {
@@ -45,10 +45,8 @@ const Profile = () => {
 
   const handleFollow = async () => {
     try {
-      // Call your API to follow the user
       await followUser(currentUserId, userId);
-      dispatch(increaseFollowingCount());
-      setFollowingStatus(1); // Update the status to 'unfollow'
+      setFollowingStatus("pending");
     } catch (error) {
       toast.error("Error while following a user");
     }
@@ -56,10 +54,9 @@ const Profile = () => {
 
   const handleUnfollow = async () => {
     try {
-      // Call your API to unfollow the user
       await unfollowUser(currentUserId,userId);
       dispatch(decreaseFollowingCount());
-      setFollowingStatus(0); // Update the status to 'follow'
+      setFollowingStatus("follow"); 
     } catch (error) {
       toast.error("Error while unfollowing a user");
     }
@@ -94,10 +91,9 @@ const Profile = () => {
             </div>
           </div>
         </div>
-
         {userId && currentUserId !== Number(userId) && (
           <div className="mt-4">
-            {followingStatus == 1 && (
+            {followingStatus === "follower" && (
               <button
                 className="px-4 py-2 bg-gray-500 text-white rounded"
                 onClick={handleUnfollow}
@@ -105,7 +101,16 @@ const Profile = () => {
                 Unfollow
               </button>
             )}
-            {(followingStatus == 0 || followingStatus === null) && (
+            {followingStatus === "pending" && (
+              <button
+                className="px-4 py-2 bg-gray-400 text-white rounded"
+                onClick={handleFollow}
+                disabled
+              >
+                Requested
+              </button>
+            )}
+            {(followingStatus !== "follower" && followingStatus !== "pending") && (
               <button
                 className="px-4 py-2 bg-blue-500 text-white rounded"
                 onClick={handleFollow}

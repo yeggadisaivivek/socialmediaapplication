@@ -251,7 +251,7 @@ const allPosts = async (userID) => {
         const [followerResults] = await pool.query(sqlSelectFollowers, [userID]);
 
         // Parse the list of followers and include the user ID
-        let followerIDs = followerResults[0].list_of_followers || [];
+        let followerIDs = followerResults[0]?.list_of_followers || [];
         if (typeof followerIDs === 'string') {
             followerIDs = JSON.parse(followerIDs);
         }

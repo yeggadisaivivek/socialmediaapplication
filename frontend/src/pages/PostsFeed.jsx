@@ -4,6 +4,7 @@ import { addComment, likeOrUnlikePost, fetchAllPosts, deletePost } from '../apiC
 import { useSelector } from 'react-redux';
 import { FaEllipsisH, FaHeart, FaCommentDots } from 'react-icons/fa';
 import { toast } from 'react-toastify';
+import defaultProfilePic from '../metadata/pictures/default_profile_pic.jpg'
 import LoadingSpinner from '../components/LoadingSpinner';
 
 const PostsFeed = ({ postFromParent, flag }) => {
@@ -146,7 +147,7 @@ const PostsFeed = ({ postFromParent, flag }) => {
               <div className="bg-white shadow-lg rounded-lg mb-6 text-black relative" key={post.id}>
                 <div className="flex items-center justify-between p-4">
                   <div className="flex items-center">
-                    <img src={post.profile_pic_url} alt={post.name} className="w-10 h-10 rounded-full mr-3" />
+                    <img src={post.profile_pic_url || defaultProfilePic} alt={post.name} className="w-10 h-10 rounded-full mr-3" />
                     <div>
                       <h2 className="text-sm font-bold">{post.name}</h2>
                     </div>
@@ -235,7 +236,7 @@ const PostsFeed = ({ postFromParent, flag }) => {
                         type="submit"
                         className="ml-2 px-4 py-2 bg-blue-500 text-white rounded h-10"
                       >
-                        Add Comment
+                        Add
                       </button>
                     </form>
                   </div>

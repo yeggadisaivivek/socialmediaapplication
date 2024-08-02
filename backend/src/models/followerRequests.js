@@ -2,22 +2,16 @@ const db = require('../db');
 const FOLLOWER_REQUEST_TABLE_NAME = "follower_requests";
 const USER_DATA_TABLE_NAME = "user_data"
 
-const getAllFollowerRequestsForUser = (userId) => {
-    try {
-        return new Promise((resolve, reject) => {
-            const sql = `
+const getAllFollowerRequestsForUser = async (userId) => {
+    const sqlQuery = `
                 SELECT ud.name, fr.request_id_from, fr.user_id 
                 FROM ${FOLLOWER_REQUEST_TABLE_NAME} fr
                 LEFT JOIN ${USER_DATA_TABLE_NAME} ud ON fr.request_id_from = ud.user_id
                 WHERE fr.user_id = ? and fr.status_of_request = 'pending'
             `;
-            db.query(sql, [userId], (err, results) => {
-                if (err) {
-                    return reject({ error: err.message });
-                }
-                resolve(results);
-            });
-        });
+    try {
+        const [results] = await db.query(sqlQuery, [userId]);
+        return { results }
     } catch (error) {
         return { error: error.message };
     }
@@ -27,7 +21,7 @@ const handleFollowerRequest = async (userID, followerID, action) => {
     const sqlSelectFollowers = `SELECT list_of_followers FROM followers WHERE user_id = ?`;
     const sqlInsertFollowers = `INSERT INTO followers (user_id, list_of_followers) VALUES (?, ?)`;
     const sqlUpdateFollowers = `UPDATE followers SET list_of_followers = ? WHERE user_id = ?`;
-    const sqlDeleteRequest = `DELETE FROM follower_request WHERE user_id = ? AND follower_id = ?`;
+    const sqlDeleteRequest = `DELETE FROM follower_requests WHERE user_id = ? AND request_id_from = ?`;
 
     try {
         if (action === 'accept') {
@@ -35,7 +29,7 @@ const handleFollowerRequest = async (userID, followerID, action) => {
             if (!results[0].list_of_followers) {
                 // No followers record exists, create a new one
                 const newFollowers = JSON.stringify([followerID]);
-                await db.query(sqlInsertFollowers, [userID, newFollowers]);
+                await db.query(sqlUpdateFollowers, [newFollowers, userID]);
             } else {
                 // Followers record exists, update it
                 let followers = JSON.parse(JSON.stringify(results[0].list_of_followers) || '[]');
@@ -49,7 +43,7 @@ const handleFollowerRequest = async (userID, followerID, action) => {
             }
         }
 
-        // Remove the request from the follower_request table regardless of action
+        // Remove the request from the follower_requests table regardless of action
         await db.query(sqlDeleteRequest, [userID, followerID]);
 
         return { message: `Follower request ${action}ed successfully` };
@@ -61,7 +55,7 @@ const handleFollowerRequest = async (userID, followerID, action) => {
 
 // Creates a follower request in follower_requests table
 const createFollowerRequest = async (userID, followerID) => {
-    const sqlInsertRequest = `INSERT INTO follower_request (user_id, follower_id) VALUES (?, ?)`;
+    const sqlInsertRequest = `INSERT INTO follower_requests (user_id, request_id_from) VALUES (?, ?)`;
 
     try {
         await db.query(sqlInsertRequest, [userID, followerID]);

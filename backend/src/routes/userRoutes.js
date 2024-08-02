@@ -1,5 +1,5 @@
 const express = require('express');
-const { getAllUsersWithNames } = require('../models/users');
+const { getAllUsersWithNames, deleteAll } = require('../models/users');
 const router = express.Router();
 
 const userDataRoutes = require('./userDataRoutes')
