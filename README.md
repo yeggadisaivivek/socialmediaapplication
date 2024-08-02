@@ -1,5 +1,7 @@
 Sure! Below is a sample `README.md` file for your project, including instructions for building and running the application using Docker Compose.
 
+Website live link::: https://socialmediaapplication-x5bu.vercel.app
+
 ```markdown
 # SocialMediaApplication
 
